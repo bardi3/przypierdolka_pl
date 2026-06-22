@@ -1,0 +1,29 @@
+/vendor/
+/config/local.php
+.env
+*.log
+
+# Cache & runtime
+/storage/cache/*
+!/storage/cache/.gitkeep
+/storage/logs/*
+!/storage/logs/.gitkeep
+
+# Uploads (zachowujemy katalogi, ignorujemy pliki)
+/public/assets/uploads/stories/*
+!/public/assets/uploads/stories/.gitkeep
+/public/assets/uploads/generated/*
+!/public/assets/uploads/generated/.gitkeep
+
+# macOS / AppleDouble (szczególnie na dyskach exFAT / sieciowych — Lexar itp.)
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+**/._*
+Icon?
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/

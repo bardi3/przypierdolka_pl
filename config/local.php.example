@@ -1,0 +1,30 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Lokalna konfiguracja — skopiuj jako config/local.php (nie commituj!).
+ *
+ * Na produkcji OBOWIĄZKOWO nadpisz sekrety z config/security.php:
+ * - security.ip_salt  — losowy ciąg min. 32 znaki
+ * - security.app_key  — losowy ciąg min. 32 znaki
+ *
+ * Przykład generowania: php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
+ */
+return [
+    'security' => [
+        'ip_salt' => 'PRODUKCJA_ZMIEN_LOSOWY_SALT',
+        'app_key' => 'PRODUKCJA_ZMIEN_LOSOWY_APP_KEY',
+    ],
+    'app' => [
+        'url'   => 'https://przypierdolka.pl',
+        'debug' => false,
+    ],
+    // Opcjonalnie: łagodniejsze limity na localu
+    // 'security' => [
+    //     'rate_limits' => [
+    //         'login'    => ['max' => 100, 'window' => 60],
+    //         'login_ip' => ['max' => 500, 'window' => 60],
+    //     ],
+    // ],
+];

@@ -1,0 +1,25 @@
+{
+    "name": "przypierdolka/przypierdolka",
+    "description": "Humorystyczny serwis z krótkimi historiami - przypierdolka.pl",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.2",
+        "ext-pdo": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*"
+    },
+    "suggest": {
+        "ext-gd": "Wymagane do generowania obrazków historii (ShareImageService)"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "minimum-stability": "stable"
+}
