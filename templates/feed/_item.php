@@ -20,13 +20,21 @@ $publishedAt = $story['published_at'] ?? $story['created_at'];
 <article class="feed-post">
     <header class="feed-post__head">
         <?php if ($authorProfileUrl !== null): ?>
-            <a href="<?= e($authorProfileUrl) ?>" class="feed-post__avatar" aria-hidden="true">
-                <?= $view->renderPartial('layout/partials/icon', ['name' => 'user']) ?>
+            <a href="<?= e($authorProfileUrl) ?>" class="feed-post__avatar-link" aria-hidden="true">
+                <?= $view->renderPartial('layout/partials/user-avatar', [
+                    'path'  => $story['author_avatar_path'] ?? null,
+                    'size'  => 'md',
+                    'class' => 'feed-post__avatar',
+                    'alt'   => '',
+                ]) ?>
             </a>
         <?php else: ?>
-            <span class="feed-post__avatar" aria-hidden="true">
-                <?= $view->renderPartial('layout/partials/icon', ['name' => 'user']) ?>
-            </span>
+            <?= $view->renderPartial('layout/partials/user-avatar', [
+                'path'  => $story['author_avatar_path'] ?? null,
+                'size'  => 'md',
+                'class' => 'feed-post__avatar',
+                'alt'   => '',
+            ]) ?>
         <?php endif; ?>
         <div class="feed-post__meta">
             <?php if ($authorProfileUrl !== null): ?>

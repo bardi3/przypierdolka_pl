@@ -23,12 +23,21 @@ $profileUrl = url('/profil/' . $profile['username']);
 <div class="social-profile">
     <?= $view->renderPartial('layout/partials/breadcrumb', ['items' => $breadcrumbs]) ?>
 
+    <?= $view->renderPartial('profile/_mod-bar', get_defined_vars()) ?>
+
     <div class="social-profile__cover" aria-hidden="true"></div>
 
     <div class="social-profile__head">
-        <div class="social-profile__avatar" aria-hidden="true">
-            <?= $view->renderPartial('layout/partials/icon', ['name' => 'user', 'class' => 'pp-icon--lg']) ?>
-        </div>
+        <?php if ($isOwner): ?>
+            <?= $view->renderPartial('profile/_avatar-menu', ['profile' => $profile]) ?>
+        <?php else: ?>
+            <?= $view->renderPartial('layout/partials/user-avatar', [
+                'path'  => $profile['avatar_path'] ?? null,
+                'size'  => 'xl',
+                'alt'   => 'Awatar @' . ($profile['username'] ?? ''),
+                'class' => 'social-profile__avatar',
+            ]) ?>
+        <?php endif; ?>
 
         <div class="social-profile__info">
             <h1 class="social-profile__name">@<?= e($profile['username']) ?></h1>
@@ -106,9 +115,12 @@ $profileUrl = url('/profil/' . $profile['username']);
                             <?php foreach ($friendsPreview as $friend): ?>
                                 <li>
                                     <a href="<?= e(url('/profil/' . $friend['username'])) ?>" class="social-friends-grid__item">
-                                        <span class="social-friends-grid__avatar" aria-hidden="true">
-                                            <?= $view->renderPartial('layout/partials/icon', ['name' => 'user']) ?>
-                                        </span>
+                                        <?= $view->renderPartial('layout/partials/user-avatar', [
+                                            'path'  => $friend['avatar_path'] ?? null,
+                                            'size'  => 'lg',
+                                            'class' => 'social-friends-grid__avatar',
+                                            'alt'   => '',
+                                        ]) ?>
                                         <span class="social-friends-grid__name"><?= e($friend['username']) ?></span>
                                     </a>
                                 </li>

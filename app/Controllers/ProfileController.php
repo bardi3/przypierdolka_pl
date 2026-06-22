@@ -8,11 +8,13 @@ use App\Core\App;
 use App\Core\Config;
 use App\Core\Controller;
 use App\Core\HttpException;
+use App\Core\Permissions;
 use App\Core\Response;
 use App\Core\Seo;
 use App\Models\Rating;
 use App\Models\Story;
 use App\Models\User;
+use App\Services\AvatarService;
 use App\Services\FriendshipService;
 use App\Services\ProfilePrivacyService;
 use App\Services\RatingService;
@@ -30,6 +32,7 @@ final class ProfileController extends Controller
     private RatingService $ratingService;
     private FriendshipService $friends;
     private ProfilePrivacyService $privacy;
+    private AvatarService $avatars;
     private int $perPage;
 
     public function __construct(App $app)
@@ -43,6 +46,7 @@ final class ProfileController extends Controller
         $this->ratingService = new RatingService(new Rating($this->db), $storyModel, $this->storyService);
         $this->friends = new FriendshipService();
         $this->privacy = new ProfilePrivacyService($this->friends);
+        $this->avatars = new AvatarService();
     }
 
     public function show(string $username): Response
@@ -55,6 +59,7 @@ final class ProfileController extends Controller
         $viewerId = $this->auth->id();
         $profileId = (int)$profile['id'];
         $isOwner = $viewerId !== null && $viewerId === $profileId;
+        $canModerate = Permissions::canModerate($this->auth->role());
 
         if (!$this->privacy->canViewProfile($viewerId, $profile) && !$isOwner) {
             return $this->view('profile/private', [
@@ -135,8 +140,37 @@ final class ProfileController extends Controller
             'friendState'      => $relation['state'],
             'friendshipId'     => $relation['friendship_id'],
             'isOwner'          => $isOwner,
+            'canModerate'      => $canModerate,
             'canViewStories'   => $canViewStories,
             'canViewFriends'   => $canViewFriends,
         ]);
+    }
+
+    public function moderatorRemoveAvatar(string $username): Response
+    {
+        $this->verifyCsrf();
+
+        $profile = $this->users->findPublicByUsername($username);
+        if ($profile === null) {
+            $this->session->flash('error', 'Nie ma takiego profilu.');
+            return $this->redirect('/profil/' . $username);
+        }
+
+        $profileId = (int)$profile['id'];
+        $oldPath = $this->users->clearAvatar($profileId);
+
+        if ($oldPath !== null) {
+            $this->avatars->deleteFile($oldPath);
+            $this->storyService->clearAllCaches();
+            $this->session->flash('success', 'Awatar użytkownika @' . $username . ' został usunięty.');
+        } else {
+            $this->session->flash('info', 'Ten użytkownik nie ma własnego awatara.');
+        }
+
+        if ($this->auth->id() === $profileId) {
+            $this->auth->refreshFromDatabase();
+        }
+
+        return $this->redirect('/profil/' . $username);
     }
 }

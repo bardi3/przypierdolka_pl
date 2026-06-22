@@ -62,6 +62,25 @@ if (!function_exists('generated_image_url')) {
     }
 }
 
+if (!function_exists('user_avatar_url')) {
+    /**
+     * URL awatara użytkownika z cache bustingiem (filemtime).
+     */
+    function user_avatar_url(?string $relativePath): ?string
+    {
+        if ($relativePath === null || $relativePath === '') {
+            return null;
+        }
+        $publicPath = (string)Config::get('app.paths.public');
+        $abs = $publicPath . '/' . ltrim($relativePath, '/');
+        if (!is_file($abs)) {
+            return null;
+        }
+
+        return url($relativePath . '?v=' . filemtime($abs));
+    }
+}
+
 if (!function_exists('iso8601')) {
     /**
      * Data w formacie ISO 8601 (atrybut datetime, schema.org).

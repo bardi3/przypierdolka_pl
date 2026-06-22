@@ -28,20 +28,32 @@ $breadcrumbs = $breadcrumbs ?? null;
 $feedType = $feedType ?? FeedService::TYPE_NEWEST;
 $feedSlug = $feedSlug ?? ($activeCategory !== null ? (string)$activeCategory['slug'] : null);
 $trendingStories = $trendingStories ?? [];
+$isHomepage = $isHomepage ?? false;
 
-$wallTitle = match (true) {
-    $activeCategory !== null && $isRanking => $rankingTitle ?? 'Top kategorii',
-    $activeCategory !== null => 'Kategoria: ' . $activeCategory['name'],
-    $rankingTitle !== null => $rankingTitle,
-    default => 'Tablica społeczności',
-};
+if (!isset($wallTitle)) {
+    $wallTitle = match (true) {
+        $activeCategory !== null && $isRanking => $rankingTitle ?? 'Top kategorii',
+        $activeCategory !== null => 'Kategoria: ' . $activeCategory['name'],
+        $rankingTitle !== null => $rankingTitle,
+        default => 'Tablica społeczności',
+    };
+}
 
-$wallSubtitle = match (true) {
-    $feedType === FeedService::TYPE_FRIENDS
-        => 'Historie opublikowane przez Twoich znajomych — oceń gwiazdkami bez wchodzenia w treść.',
-    $isRanking && $minRatings !== null
-        => ranking_lead((int)$minRatings, $sort ?? null, $activeCategory !== null ? (string)$activeCategory['name'] : null),
-    default => 'Najświeższe historie od społeczności — oceń gwiazdkami bez wchodzenia w treść.',
+if (!isset($wallSubtitle)) {
+    $wallSubtitle = match (true) {
+        $feedType === FeedService::TYPE_FRIENDS
+            => 'Historie opublikowane przez Twoich znajomych — oceń gwiazdkami bez wchodzenia w treść.',
+        $isRanking && $minRatings !== null
+            => ranking_lead((int)$minRatings, $sort ?? null, $activeCategory !== null ? (string)$activeCategory['name'] : null),
+        default => 'Najświeższe historie od społeczności — oceń gwiazdkami bez wchodzenia w treść.',
+    };
+}
+
+$feedListLabel = match (true) {
+    $feedType === FeedService::TYPE_FRIENDS => 'Historie znajomych',
+    $isRanking => $rankingTitle ?? 'Ranking historii',
+    $activeCategory !== null => 'Historie w kategorii ' . ($activeCategory['name'] ?? ''),
+    default => 'Najnowsze historie',
 };
 
 $feedTabs = [
@@ -71,7 +83,7 @@ if ($activeCategory !== null) {
     <?php endif; ?>
 
     <header class="wall-header">
-        <h1 class="wall-header__title"><?= e($wallTitle) ?></h1>
+        <h1 class="wall-header__title" id="wall-heading"><?= e($wallTitle) ?></h1>
         <p class="wall-header__lead"><?= e($wallSubtitle) ?></p>
     </header>
 
@@ -91,7 +103,7 @@ if ($activeCategory !== null) {
     <?php endif; ?>
 
     <div class="social-profile__layout social-wall__layout">
-        <main class="social-wall__main">
+        <section class="social-wall__main" aria-labelledby="wall-heading">
             <nav class="wall-tabs" aria-label="Filtr tablicy">
                 <?php foreach ($feedTabs as $tab): ?>
                     <a href="<?= e(url(ltrim($tab['url'], '/'))) ?>"
@@ -125,25 +137,30 @@ if ($activeCategory !== null) {
                     ]) ?>
                 <?php endif; ?>
             <?php else: ?>
-                <div class="social-wall__feed"
-                     data-feed-infinite
-                     data-feed-type="<?= e($feedType) ?>"
-                     data-feed-slug="<?= e((string)($feedSlug ?? '')) ?>"
-                     data-feed-page="<?= e($listing['page']) ?>"
-                     data-feed-pages="<?= e($listing['pages']) ?>">
-                    <div class="social-feed" data-feed-list>
-                        <?= $view->renderPartial('feed/_list', [
-                            'stories'     => $listing['items'],
-                            'userRatings' => $userRatings,
-                        ]) ?>
-                    </div>
-                    <?php if ($listing['page'] < $listing['pages']): ?>
-                        <div class="feed-infinite-status" data-feed-status aria-live="polite">
-                            <span class="feed-infinite-status__spinner" aria-hidden="true"></span>
-                            <span class="feed-infinite-status__text">Ładowanie kolejnych historii…</span>
+                <section class="social-wall__feed-section" aria-labelledby="wall-feed-label">
+                    <h2 id="wall-feed-label" class="visually-hidden"><?= e($feedListLabel) ?></h2>
+                    <div class="social-wall__feed"
+                         data-feed-infinite
+                         data-feed-type="<?= e($feedType) ?>"
+                         data-feed-slug="<?= e((string)($feedSlug ?? '')) ?>"
+                         data-feed-page="<?= e($listing['page']) ?>"
+                         data-feed-pages="<?= e($listing['pages']) ?>"
+                         role="feed"
+                         aria-busy="false">
+                        <div class="social-feed" data-feed-list>
+                            <?= $view->renderPartial('feed/_list', [
+                                'stories'     => $listing['items'],
+                                'userRatings' => $userRatings,
+                            ]) ?>
                         </div>
-                    <?php endif; ?>
-                </div>
+                        <?php if ($listing['page'] < $listing['pages']): ?>
+                            <div class="feed-infinite-status" data-feed-status aria-live="polite">
+                                <span class="feed-infinite-status__spinner" aria-hidden="true"></span>
+                                <span class="feed-infinite-status__text">Ładowanie kolejnych historii…</span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </section>
 
                 <noscript>
                     <?= $view->renderPartial('layout/partials/pagination', [
@@ -154,7 +171,7 @@ if ($activeCategory !== null) {
                     ]) ?>
                 </noscript>
             <?php endif; ?>
-        </main>
+        </section>
 
         <?= $view->renderPartial('layout/partials/wall-sidebar', get_defined_vars()) ?>
     </div>

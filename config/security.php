@@ -39,6 +39,7 @@ return [
         'rating'          => ['max' => 30, 'window' => 600],
         'search'          => ['max' => 40, 'window' => 60],
         'search_ip'       => ['max' => 80, 'window' => 60],
+        'avatar_upload'   => ['max' => 10, 'window' => 3600], // tylko udane zapisy
     ],
 
     // Hashowanie haseł

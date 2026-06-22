@@ -58,7 +58,7 @@ final class SeoSchemaService
     /**
      * @return array<string, mixed>
      */
-    public function websiteNode(?string $description = null): array
+    public function websiteNode(?string $description = null, bool $withSearch = false): array
     {
         $node = [
             '@type'     => 'WebSite',
@@ -71,6 +71,17 @@ final class SeoSchemaService
 
         if ($description !== null && $description !== '') {
             $node['description'] = $description;
+        }
+
+        if ($withSearch) {
+            $node['potentialAction'] = [
+                '@type'       => 'SearchAction',
+                'target'      => [
+                    '@type'       => 'EntryPoint',
+                    'urlTemplate' => $this->baseUrl . '/szukaj?q={search_term_string}',
+                ],
+                'query-input' => 'required name=search_term_string',
+            ];
         }
 
         return $node;
@@ -281,6 +292,61 @@ final class SeoSchemaService
             'itemListOrder'   => 'https://schema.org/ItemListOrderDescending',
             'itemListElement' => $elements,
         ];
+    }
+
+    /**
+     * Strona główna — CollectionPage + WebSite z wyszukiwarką.
+     *
+     * @param array<int, array<string, mixed>> $stories
+     * @param array<int, array{name:string, url:string}>|null $breadcrumbItems
+     * @return array<string, mixed>
+     */
+    public function homePage(
+        string $pageUrl,
+        string $name,
+        ?string $description,
+        array $stories,
+        int $page = 1,
+        int $perPage = 12,
+        ?array $breadcrumbItems = null
+    ): array {
+        $itemListId = $pageUrl . '#itemlist';
+
+        $collection = [
+            '@type'      => 'CollectionPage',
+            '@id'        => $pageUrl . '#webpage',
+            'url'        => $pageUrl,
+            'name'       => $name,
+            'isPartOf'   => ['@id' => $this->websiteId],
+            'inLanguage' => 'pl-PL',
+            'about'      => [
+                '@type' => 'Thing',
+                'name'  => 'Humorystyczne historie z życia',
+            ],
+            'mainEntity' => ['@id' => $itemListId],
+        ];
+
+        if ($description !== null && $description !== '') {
+            $collection['description'] = $description;
+            $collection['about']['description'] = $description;
+        }
+
+        if ($breadcrumbItems !== null && $breadcrumbItems !== []) {
+            $collection['breadcrumb'] = ['@id' => $pageUrl . '#breadcrumb'];
+        }
+
+        $nodes = [
+            $this->organizationNode(),
+            $this->websiteNode($description, true),
+            $collection,
+            $this->itemListNode($pageUrl, $stories, $page, $perPage),
+        ];
+
+        if ($breadcrumbItems !== null && $breadcrumbItems !== []) {
+            array_splice($nodes, 2, 0, [$this->breadcrumbNode($pageUrl, $breadcrumbItems)]);
+        }
+
+        return $this->graph($nodes);
     }
 
     /**

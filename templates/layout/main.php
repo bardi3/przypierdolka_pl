@@ -15,6 +15,7 @@ $flashes = $flashes ?? [];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
+    <meta name="theme-color" content="#0f172a">
     <?php if ($seo instanceof \App\Core\Seo): ?>
     <?= $seo->renderHead() ?>
 
@@ -27,6 +28,7 @@ $flashes = $flashes ?? [];
       data-ajax-feed-url="<?= e(url('/ajax/feed')) ?>"
       data-ajax-search-url="<?= e(url('/ajax/search')) ?>"
       data-ajax-story-url="<?= e(url('/ajax/story')) ?>">
+    <a class="visually-hidden" href="#main-content">Przejdź do treści</a>
     <?= $view->renderPartial('layout/partials/navbar', get_defined_vars()) ?>
 
     <main id="main-content" class="site-main">

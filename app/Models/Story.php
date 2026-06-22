@@ -31,7 +31,8 @@ final class Story extends Model
         s.generated_image_path,
         s.created_at, s.published_at,
         c.name AS category_name, c.slug AS category_slug,
-        u.username AS author_username
+        u.username AS author_username,
+        u.avatar_path AS author_avatar_path
     ";
 
     private const SELECT_FULL = "
@@ -41,7 +42,8 @@ final class Story extends Model
         s.generated_image_path,
         s.created_at, s.published_at,
         c.name AS category_name, c.slug AS category_slug,
-        u.username AS author_username
+        u.username AS author_username,
+        u.avatar_path AS author_avatar_path
     ";
 
     private const FROM_JOINS = "

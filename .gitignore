@@ -14,6 +14,8 @@
 !/public/assets/uploads/stories/.gitkeep
 /public/assets/uploads/generated/*
 !/public/assets/uploads/generated/.gitkeep
+/public/assets/uploads/avatars/*
+!/public/assets/uploads/avatars/.gitkeep
 
 # macOS / AppleDouble (szczególnie na dyskach exFAT / sieciowych — Lexar itp.)
 .DS_Store

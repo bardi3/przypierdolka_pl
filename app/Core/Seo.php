@@ -14,11 +14,15 @@ final class Seo
     private string $baseUrl;
 
     private string $title = '';
+    private bool $standaloneTitle = false;
     private string $description = '';
     private ?string $canonical = null;
     private string $robots = 'index, follow';
     private string $ogType = 'website';
     private ?string $ogImage = null;
+    private ?int $ogImageWidth = null;
+    private ?int $ogImageHeight = null;
+    private string $ogImageAlt = '';
 
     private ?string $articlePublished = null;
     private ?string $articleModified = null;
@@ -41,6 +45,17 @@ final class Seo
     public function setTitle(string $title): self
     {
         $this->title = $title;
+        $this->standaloneTitle = false;
+        return $this;
+    }
+
+    /**
+     * Pełny tytuł dokumentu bez dopisywania nazwy serwisu (np. strona główna z ustawień).
+     */
+    public function setStandaloneTitle(string $title): self
+    {
+        $this->title = trim($title);
+        $this->standaloneTitle = true;
         return $this;
     }
 
@@ -68,9 +83,17 @@ final class Seo
         return $this;
     }
 
-    public function setOgImage(?string $url): self
+    public function setOgImage(?string $url, ?int $width = null, ?int $height = null): self
     {
         $this->ogImage = $url ? $this->absolute($url) : null;
+        $this->ogImageWidth = $width;
+        $this->ogImageHeight = $height;
+        return $this;
+    }
+
+    public function setOgImageAlt(string $alt): self
+    {
+        $this->ogImageAlt = trim($alt);
         return $this;
     }
 
@@ -124,6 +147,9 @@ final class Seo
     {
         if ($this->title === '') {
             return $this->siteName;
+        }
+        if ($this->standaloneTitle) {
+            return $this->title;
         }
         return $this->title . ' — ' . $this->siteName;
     }
@@ -179,7 +205,16 @@ final class Seo
         $out[] = '<meta property="og:url" content="' . $this->esc($canonical) . '">';
         if ($image !== null) {
             $out[] = '<meta property="og:image" content="' . $this->esc($image) . '">';
-            $out[] = '<meta property="og:image:alt" content="' . $this->esc($this->title !== '' ? $this->title : $this->siteName) . '">';
+            if ($this->ogImageWidth !== null && $this->ogImageWidth > 0) {
+                $out[] = '<meta property="og:image:width" content="' . $this->ogImageWidth . '">';
+            }
+            if ($this->ogImageHeight !== null && $this->ogImageHeight > 0) {
+                $out[] = '<meta property="og:image:height" content="' . $this->ogImageHeight . '">';
+            }
+            $imageAlt = $this->ogImageAlt !== ''
+                ? $this->ogImageAlt
+                : ($this->title !== '' ? $this->title : $this->siteName);
+            $out[] = '<meta property="og:image:alt" content="' . $this->esc($imageAlt) . '">';
         }
         if ($this->ogType === 'article') {
             if ($this->articlePublished !== null) {

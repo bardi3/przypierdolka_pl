@@ -77,17 +77,43 @@ final class HomeController extends Controller
         $canonical = $pageNum > 1 ? "/strona/{$pageNum}" : '/';
         $pageUrl = $this->url($canonical);
         $schema = new SeoSchemaService();
-        $seo = (new Seo((string)Config::get('app.name'), (string)Config::get('app.url')))
-            ->setTitle('')
-            ->setDescription($siteDesc ?: (string)Config::get('app.tagline'))
+        $siteName = (string)Config::get('app.name');
+        $description = $siteDesc ?: (string)Config::get('app.tagline');
+        if ($pageNum > 1) {
+            $description = mb_substr(trim($description . " Strona {$pageNum}."), 0, 300);
+        }
+
+        $documentTitle = $pageNum === 1
+            ? ($siteTitle !== '' ? $siteTitle : $siteName)
+            : "Najnowsze historie — strona {$pageNum} | {$siteName}";
+
+        $schemaName = $pageNum === 1
+            ? ($siteTitle !== '' ? $siteTitle : $siteName)
+            : "Najnowsze historie — strona {$pageNum}";
+
+        $breadcrumbItems = null;
+        if ($pageNum > 1) {
+            $breadcrumbItems = [
+                ['name' => 'Strona główna', 'url' => $this->url('/')],
+                ['name' => "Strona {$pageNum}", 'url' => $pageUrl],
+            ];
+        }
+
+        $seo = (new Seo($siteName, (string)Config::get('app.url')))
+            ->setStandaloneTitle($documentTitle)
+            ->setDescription($description)
             ->setCanonical($canonical)
-            ->addJsonLd($schema->listingPage(
+            ->setOgType('website')
+            ->setOgImage('/assets/img/og-default.webp', 1200, 630)
+            ->setOgImageAlt($siteTitle !== '' ? $siteTitle : $siteName)
+            ->addJsonLd($schema->homePage(
                 $pageUrl,
-                $siteTitle,
+                $schemaName,
                 $siteDesc ?: null,
                 $listing['items'],
                 $pageNum,
-                (int)Config::get('app.per_page', 12)
+                (int)Config::get('app.per_page', 12),
+                $breadcrumbItems
             ));
 
         if ($keywords !== '') {
@@ -104,6 +130,14 @@ final class HomeController extends Controller
             'activeCategory' => null,
             'baseListUrl'    => '/',
             'isRanking'      => false,
+            'isHomepage'     => true,
+            'wallTitle'      => $pageNum === 1
+                ? $this->homeHeading($siteTitle, (string)Config::get('app.tagline'))
+                : 'Tablica społeczności — strona ' . $pageNum,
+            'wallSubtitle'   => $pageNum === 1
+                ? $description
+                : 'Najświeższe historie od społeczności — oceń gwiazdkami bez wchodzenia w treść.',
+            'breadcrumbs'    => $breadcrumbItems,
         ], $this->wallMeta(FeedService::TYPE_NEWEST)));
     }
 
@@ -300,5 +334,17 @@ final class HomeController extends Controller
                 : "{$basePath}?page=" . ($page + 1);
             $seo->setNextUrl($next);
         }
+    }
+
+    private function homeHeading(string $siteTitle, string $tagline): string
+    {
+        if (preg_match('/[—–\-]\s*(.+)/u', $siteTitle, $matches) === 1) {
+            $part = trim($matches[1]);
+            if ($part !== '') {
+                return $part;
+            }
+        }
+
+        return $tagline !== '' ? $tagline : 'Tablica społeczności';
     }
 }

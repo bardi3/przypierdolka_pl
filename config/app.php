@@ -55,8 +55,15 @@ return [
         'allowed_ext'   => ['jpg', 'jpeg', 'png', 'webp', 'gif'],
     ],
 
+    'avatars' => [
+        'max_upload'    => 8 * 1024 * 1024, // 8 MB — oryginał przed kadrowaniem (i tak zapisujemy jako mały WebP)
+        'output_size'   => 256,
+        'webp_quality'  => 82,
+        'max_dimension' => 4096,
+    ],
+
     // Wersja assetów (do cache-bustingu ?v=)
-    'assets_version' => '2.10.3',
+    'assets_version' => '2.11.4',
 
     // Wyszukiwarka
     'search' => [

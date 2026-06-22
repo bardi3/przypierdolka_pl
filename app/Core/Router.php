@@ -103,7 +103,7 @@ final class Router
             return $this->invoke($route['handler'], $params);
         }
 
-        throw HttpException::notFound("Brak trasy dla {$method} {$uri}");
+        throw HttpException::notFound(expose: false);
     }
 
     private function runMiddleware(string $name): ?Response
@@ -128,13 +128,13 @@ final class Router
         $class = 'App\\Controllers\\' . str_replace('/', '\\', $controllerName);
 
         if (!class_exists($class)) {
-            throw HttpException::notFound("Kontroler nie istnieje: {$class}");
+            throw HttpException::notFound(expose: false);
         }
 
         $controller = new $class($this->app);
 
         if (!method_exists($controller, $action)) {
-            throw HttpException::notFound("Akcja nie istnieje: {$class}::{$action}");
+            throw HttpException::notFound(expose: false);
         }
 
         $result = $controller->{$action}(...array_values($params));

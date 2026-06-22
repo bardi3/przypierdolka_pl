@@ -79,6 +79,23 @@ final class User extends Model
         $this->update($id, $data);
     }
 
+    public function updateAvatarPath(int $id, ?string $path): void
+    {
+        $this->update($id, ['avatar_path' => $path !== '' ? $path : null]);
+    }
+
+    public function clearAvatar(int $id): ?string
+    {
+        $user = $this->find($id);
+        if ($user === null) {
+            return null;
+        }
+        $old = !empty($user['avatar_path']) ? (string)$user['avatar_path'] : null;
+        $this->updateAvatarPath($id, null);
+
+        return $old;
+    }
+
     /**
      * @param array{profile_visibility?:string, stories_visibility?:string, friends_list_visibility?:string} $settings
      */
@@ -102,7 +119,7 @@ final class User extends Model
     public function findPublicByUsername(string $username): ?array
     {
         return $this->db->fetch(
-            "SELECT id, username, role, created_at, bio,
+            "SELECT id, username, role, created_at, bio, avatar_path,
                     profile_visibility, stories_visibility, friends_list_visibility
              FROM `users`
              WHERE username = ? AND status = 'active'

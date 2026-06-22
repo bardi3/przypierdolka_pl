@@ -60,12 +60,21 @@ $pending_friend_invites = (int)($pending_friend_invites ?? 0);
                 <?php if ($auth->check()): ?>
                     <?php $u = $auth->user(); ?>
                     <?php $username = (string)($u['username'] ?? ''); ?>
+                    <?php if ($username !== ''): ?>
+                        <a class="btn btn-ghost btn-sm nav-btn nav-btn--profile<?= $isActive('/profil/' . $username) ?>"
+                           href="<?= e(url('/profil/' . $username)) ?>"
+                           title="Mój profil"
+                           aria-label="Mój profil — @<?= e($username) ?>">
+                            <?= $view->renderPartial('layout/partials/user-avatar', [
+                                'path'  => $u['avatar_path'] ?? null,
+                                'size'  => 'sm',
+                                'class' => 'nav-profile__avatar',
+                                'alt'   => '',
+                            ]) ?>
+                            <span class="nav-profile__nick">@<?= e($username) ?></span>
+                        </a>
+                    <?php endif; ?>
                     <div class="site-nav__user-bar">
-                        <?php if ($username !== ''): ?>
-                            <a class="btn btn-ghost btn-sm nav-btn<?= $isActive('/profil/' . $username) ?>"
-                               href="<?= e(url('/profil/' . $username)) ?>">Mój profil</a>
-                        <?php endif; ?>
-
                         <a href="<?= e(url('/konto/znajomi')) ?>"
                            class="btn btn-ghost btn-sm nav-btn nav-btn--with-icon<?= $isActive('/konto/znajomi') ?>"
                            title="Znajomi"

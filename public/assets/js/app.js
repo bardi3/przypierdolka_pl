@@ -13,6 +13,7 @@
         initSiteSearch();
         initWallComposer();
         initStoryInlineEdit();
+        initProfileAvatarMenu();
     });
 
     function ajaxStoryUrl() {
@@ -97,6 +98,71 @@
         document.querySelectorAll('.nav-dropdown__toggle').forEach(function (btn) {
             btn.setAttribute('aria-expanded', 'false');
         });
+        document.querySelectorAll('.profile-avatar-menu__menu').forEach(function (menu) {
+            menu.setAttribute('hidden', 'hidden');
+        });
+        document.querySelectorAll('.profile-avatar-menu__trigger').forEach(function (btn) {
+            btn.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    function initProfileAvatarMenu() {
+        document.querySelectorAll('[data-profile-avatar-menu]').forEach(function (wrap) {
+            var btn = wrap.querySelector('.profile-avatar-menu__trigger');
+            var menu = wrap.querySelector('.profile-avatar-menu__menu');
+            if (!btn || !menu) {
+                return;
+            }
+
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var open = menu.hasAttribute('hidden');
+                closeAllDropdowns();
+                if (open) {
+                    menu.removeAttribute('hidden');
+                    btn.setAttribute('aria-expanded', 'true');
+                }
+            });
+        });
+
+        var lightbox = document.querySelector('[data-avatar-lightbox]');
+        var lightboxImg = lightbox ? lightbox.querySelector('[data-avatar-lightbox-img]') : null;
+
+        function closeLightbox() {
+            if (!lightbox) {
+                return;
+            }
+            lightbox.setAttribute('hidden', 'hidden');
+            if (lightboxImg) {
+                lightboxImg.removeAttribute('src');
+            }
+        }
+
+        document.querySelectorAll('[data-profile-avatar-view]').forEach(function (viewBtn) {
+            viewBtn.addEventListener('click', function () {
+                if (!lightbox || !lightboxImg) {
+                    return;
+                }
+                var url = viewBtn.getAttribute('data-avatar-url');
+                if (!url) {
+                    return;
+                }
+                closeAllDropdowns();
+                lightboxImg.src = url;
+                lightbox.removeAttribute('hidden');
+            });
+        });
+
+        if (lightbox) {
+            lightbox.querySelectorAll('[data-avatar-lightbox-close]').forEach(function (el) {
+                el.addEventListener('click', closeLightbox);
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && lightbox && !lightbox.hasAttribute('hidden')) {
+                    closeLightbox();
+                }
+            });
+        }
     }
 
     function initFlashDismiss() {

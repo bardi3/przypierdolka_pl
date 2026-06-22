@@ -15,6 +15,8 @@ $err = static fn (string $f): string => isset($errors[$f]) ? 'is-invalid' : '';
             <p class="page-subtitle">Edytuj profil widoczny na tablicy publicznej.</p>
         </header>
 
+        <?= $view->renderPartial('account/_avatar-editor', get_defined_vars()) ?>
+
         <form method="post" action="<?= e(url('/konto/profil')) ?>" class="account-form card">
             <div class="card-body">
                 <?= $csrf->field() ?>

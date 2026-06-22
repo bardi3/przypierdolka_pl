@@ -14,6 +14,7 @@ use App\Core\Validator;
 use App\Models\Category;
 use App\Models\Story;
 use App\Models\User;
+use App\Services\AvatarService;
 use App\Services\FeedService;
 use App\Services\FriendshipService;
 use App\Services\ProfilePrivacyService;
@@ -32,6 +33,7 @@ final class AccountController extends Controller
     private ProfilePrivacyService $privacy;
     private FeedService $feedService;
     private Category $categories;
+    private AvatarService $avatars;
 
     public function __construct(App $app)
     {
@@ -48,6 +50,7 @@ final class AccountController extends Controller
         );
         $this->friends = new FriendshipService();
         $this->privacy = new ProfilePrivacyService($this->friends);
+        $this->avatars = new AvatarService();
     }
 
     public function index(): Response
@@ -60,10 +63,83 @@ final class AccountController extends Controller
         $user = $this->requireUser();
 
         return $this->accountView('account/profile', [
-            'user'   => $user,
-            'old'    => [],
-            'errors' => [],
+            'user'           => $user,
+            'old'            => [],
+            'errors'         => [],
+            'avatarSupported'=> $this->avatars->canProcess(),
         ], 'profile');
+    }
+
+    public function ajaxUploadAvatar(): Response
+    {
+        try {
+            $this->verifyCsrf();
+        } catch (\Throwable) {
+            return $this->json(['success' => false, 'error' => 'Nieprawidłowy token CSRF.'], 403);
+        }
+
+        $user = $this->requireUser();
+        $userId = (int)$user['id'];
+
+        if ($this->rateLimiter->tooManyAttempts('avatar_upload', (string)$userId)) {
+            $retry = $this->rateLimiter->retryAfter('avatar_upload', (string)$userId);
+            $msg = $retry > 60
+                ? 'Za dużo zapisów awatara w ostatniej godzinie. Spróbuj za ok. ' . (int)ceil($retry / 60) . ' min.'
+                : ($retry > 0
+                    ? 'Za dużo zapisów awatara. Spróbuj za chwilę.'
+                    : 'Za dużo zapisów awatara w ostatniej godzinie.');
+            return $this->json(['success' => false, 'error' => $msg], 429);
+        }
+
+        $file = $_FILES['avatar'] ?? null;
+        if (!is_array($file)) {
+            return $this->json(['success' => false, 'error' => 'Nie wybrano pliku.'], 422);
+        }
+
+        $oldPath = !empty($user['avatar_path']) ? (string)$user['avatar_path'] : null;
+        $result = $this->avatars->storeFromUpload($file, $userId, $oldPath);
+
+        if (!$result['ok']) {
+            return $this->json(['success' => false, 'error' => $result['error'] ?? 'Błąd zapisu.'], 422);
+        }
+
+        $this->rateLimiter->attempt('avatar_upload', (string)$userId);
+
+        $this->users->updateAvatarPath($userId, (string)$result['path']);
+        $this->auth->refreshFromDatabase();
+        $this->storyService->clearAllCaches();
+
+        return $this->json([
+            'success' => true,
+            'url'     => $result['url'],
+            'path'    => $result['path'],
+            'message' => 'Zdjęcie profilowe zapisane.',
+        ]);
+    }
+
+    public function ajaxRemoveAvatar(): Response
+    {
+        try {
+            $this->verifyCsrf();
+        } catch (\Throwable) {
+            return $this->json(['success' => false, 'error' => 'Nieprawidłowy token CSRF.'], 403);
+        }
+
+        $user = $this->requireUser();
+        $userId = (int)$user['id'];
+        $oldPath = $this->users->clearAvatar($userId);
+
+        if ($oldPath !== null) {
+            $this->avatars->deleteFile($oldPath);
+        }
+
+        $this->auth->refreshFromDatabase();
+        $this->storyService->clearAllCaches();
+
+        return $this->json([
+            'success' => true,
+            'message' => 'Zdjęcie profilowe usunięte.',
+        ]);
     }
 
     public function updateProfile(): Response

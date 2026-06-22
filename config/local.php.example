@@ -12,13 +12,24 @@ declare(strict_types=1);
  * Przykład generowania: php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
  */
 return [
+    // Dane z panelu hostingu (MySQL)
+    'database' => [
+        'host'     => '127.0.0.1',
+        'port'     => 3306,
+        'database' => 'przypierdolka',
+        'username' => 'twoj_login_mysql',
+        'password' => 'twoje_haslo_mysql',
+    ],
+
+    'app' => [
+        'env'   => 'production',
+        'url'   => 'https://przypierdolka.pl',
+        'debug' => false,
+    ],
+
     'security' => [
         'ip_salt' => 'PRODUKCJA_ZMIEN_LOSOWY_SALT',
         'app_key' => 'PRODUKCJA_ZMIEN_LOSOWY_APP_KEY',
-    ],
-    'app' => [
-        'url'   => 'https://przypierdolka.pl',
-        'debug' => false,
     ],
     // Opcjonalnie: łagodniejsze limity na localu
     // 'security' => [

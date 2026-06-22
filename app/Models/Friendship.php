@@ -73,7 +73,7 @@ final class Friendship extends Model
     {
         return $this->db->fetchAll(
             "SELECT f.id AS friendship_id, f.created_at AS friends_since,
-                    u.id, u.username, u.bio, u.created_at
+                    u.id, u.username, u.bio, u.avatar_path, u.created_at
              FROM `friendships` f
              INNER JOIN `users` u ON u.id = IF(f.requester_id = ?, f.addressee_id, f.requester_id)
              WHERE f.status = 'accepted'
@@ -129,7 +129,7 @@ final class Friendship extends Model
     public function friendsForProfile(int $profileUserId, int $limit): array
     {
         return $this->db->fetchAll(
-            "SELECT u.id, u.username
+            "SELECT u.id, u.username, u.avatar_path
              FROM `friendships` f
              INNER JOIN `users` u ON u.id = IF(f.requester_id = ?, f.addressee_id, f.requester_id)
              WHERE f.status = 'accepted'
@@ -149,7 +149,7 @@ final class Friendship extends Model
         $prefix = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $query) . '%';
 
         return $this->db->fetchAll(
-            "SELECT u.id, u.username, u.bio
+            "SELECT u.id, u.username, u.avatar_path, u.bio
              FROM `friendships` f
              INNER JOIN `users` u ON u.id = IF(f.requester_id = ?, f.addressee_id, f.requester_id)
              WHERE f.status = 'accepted'

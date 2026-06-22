@@ -152,17 +152,17 @@ final class App
     {
         $this->log($e);
 
-        $debug = (bool)Config::get('app.debug', false);
         $status = $e instanceof HttpException ? $e->getStatusCode() : 500;
+        $message = $e instanceof HttpException
+            ? $e->getDisplayMessage()
+            : 'Wystąpił nieoczekiwany błąd. Spróbuj ponownie później.';
 
         try {
             /** @var View $view */
             $view = $this->get('view');
             $html = $view->render('errors/error', [
                 'status'  => $status,
-                'message' => $debug ? $e->getMessage() : 'Coś poszło nie tak.',
-                'trace'   => $debug ? $e->getTraceAsString() : '',
-                'debug'   => $debug,
+                'message' => $message,
             ], 'layout/main');
             return Response::html($html, $status);
         } catch (Throwable) {

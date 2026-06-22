@@ -36,11 +36,14 @@ return [
     ['POST', '/profil/{username}/akceptuj','FriendController@accept',        'auth'],
     ['POST', '/profil/{username}/odrzuc',  'FriendController@reject',        'auth'],
     ['POST', '/profil/{username}/usun',    'FriendController@remove',        'auth'],
+    ['POST', '/profil/{username}/avatar/usun', 'ProfileController@moderatorRemoveAvatar', 'moderator'],
 
     // Tablica (AJAX)
     ['GET',  '/ajax/feed',                 'FeedController@load'],
     ['POST', '/ajax/story',                'StoryController@ajaxStore'],
     ['POST', '/ajax/story/{id}/edit',      'StoryController@ajaxUpdate', 'auth'],
+    ['POST', '/ajax/account/avatar',       'AccountController@ajaxUploadAvatar', 'auth'],
+    ['POST', '/ajax/account/avatar/usun',  'AccountController@ajaxRemoveAvatar', 'auth'],
 
     // Wyszukiwarka
     ['GET',  '/szukaj',                    'SearchController@index'],

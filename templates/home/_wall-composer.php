@@ -14,9 +14,13 @@ $defaultCategoryId = (int)($categories[0]['id'] ?? 0);
             data-wall-composer-trigger
             aria-expanded="false"
             aria-controls="wall-composer-panel">
-        <span class="wall-composer__avatar" aria-hidden="true">
-            <?= $view->renderPartial('layout/partials/icon', ['name' => 'user']) ?>
-        </span>
+        <?php $wallMe = $auth->user(); ?>
+        <?= $view->renderPartial('layout/partials/user-avatar', [
+            'path'  => ($wallMe !== null ? ($wallMe['avatar_path'] ?? null) : null),
+            'size'  => 'md',
+            'class' => 'wall-composer__avatar',
+            'alt'   => '',
+        ]) ?>
         <span class="wall-composer__placeholder">Co Ci się dziś wydarzyło? Opowiedz historię…</span>
         <span class="wall-composer__cta btn btn-accent btn-sm" aria-hidden="true">+ Dodaj</span>
     </button>

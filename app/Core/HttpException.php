@@ -12,10 +12,16 @@ use RuntimeException;
 class HttpException extends RuntimeException
 {
     private int $statusCode;
+    private bool $exposeMessage;
 
-    public function __construct(int $statusCode, string $message = '', ?\Throwable $previous = null)
-    {
+    public function __construct(
+        int $statusCode,
+        string $message = '',
+        ?\Throwable $previous = null,
+        bool $exposeMessage = true
+    ) {
         $this->statusCode = $statusCode;
+        $this->exposeMessage = $exposeMessage;
         parent::__construct($message !== '' ? $message : self::defaultMessage($statusCode), 0, $previous);
     }
 
@@ -24,22 +30,32 @@ class HttpException extends RuntimeException
         return $this->statusCode;
     }
 
-    public static function notFound(string $message = 'Strona nie została znaleziona.'): self
+    /** Komunikat bezpieczny do wyświetlenia użytkownikowi (bez ścieżek, tras, klas). */
+    public function getDisplayMessage(): string
     {
-        return new self(404, $message);
+        if ($this->exposeMessage) {
+            return $this->getMessage();
+        }
+
+        return self::defaultMessage($this->statusCode);
     }
 
-    public static function forbidden(string $message = 'Brak dostępu.'): self
+    public static function notFound(string $message = '', bool $expose = true): self
     {
-        return new self(403, $message);
+        return new self(404, $message, null, $expose);
     }
 
-    public static function tooManyRequests(string $message = 'Zbyt wiele żądań. Spróbuj później.'): self
+    public static function forbidden(string $message = '', bool $expose = true): self
     {
-        return new self(429, $message);
+        return new self(403, $message, null, $expose);
     }
 
-    private static function defaultMessage(int $status): string
+    public static function tooManyRequests(string $message = '', bool $expose = true): self
+    {
+        return new self(429, $message, null, $expose);
+    }
+
+    public static function defaultMessage(int $status): string
     {
         return match ($status) {
             400 => 'Nieprawidłowe żądanie.',
