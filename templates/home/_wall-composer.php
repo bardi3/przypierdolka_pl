@@ -13,7 +13,8 @@ $defaultCategoryId = (int)($categories[0]['id'] ?? 0);
             class="wall-composer__trigger"
             data-wall-composer-trigger
             aria-expanded="false"
-            aria-controls="wall-composer-panel">
+            aria-controls="wall-composer-panel"
+            aria-label="Dodaj nową historię na tablicę">
         <?php $wallMe = $auth->user(); ?>
         <?= $view->renderPartial('layout/partials/user-avatar', [
             'path'  => ($wallMe !== null ? ($wallMe['avatar_path'] ?? null) : null),
@@ -22,7 +23,7 @@ $defaultCategoryId = (int)($categories[0]['id'] ?? 0);
             'alt'   => '',
         ]) ?>
         <span class="wall-composer__placeholder">Co Ci się dziś wydarzyło? Opowiedz historię…</span>
-        <span class="wall-composer__cta btn btn-accent btn-sm" aria-hidden="true">+ Dodaj</span>
+        <span class="wall-composer__cta btn btn-accent btn-sm">+ Dodaj</span>
     </button>
 
     <form id="wall-composer-panel"
@@ -33,8 +34,9 @@ $defaultCategoryId = (int)($categories[0]['id'] ?? 0);
           hidden>
         <?= $csrf->field() ?>
         <input type="hidden" name="quick" value="1">
-        <div class="wall-composer__hp" aria-hidden="true">
-            <label>Nie wypełniaj <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+        <div class="wall-composer__hp visually-hidden">
+            <label for="wall-composer-hp">Nie wypełniaj tego pola</label>
+            <input type="text" id="wall-composer-hp" name="website" tabindex="-1" autocomplete="off">
         </div>
 
         <label class="visually-hidden" for="wall-composer-content">Treść historii</label>

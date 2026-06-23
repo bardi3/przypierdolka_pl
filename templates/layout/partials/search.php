@@ -28,7 +28,7 @@ if ($isSearchPage) {
         <button type="submit" class="site-search__submit nav-icon-btn" title="Szukaj" aria-label="Szukaj">
             <?= $view->renderPartial('layout/partials/icon', ['name' => 'search']) ?>
         </button>
-        <input type="text" name="website" class="site-search__trap" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <input type="text" name="website" class="site-search__trap visually-hidden" tabindex="-1" autocomplete="off" value="">
     </form>
     <div class="site-search__dropdown" data-site-search-dropdown hidden></div>
 </div>

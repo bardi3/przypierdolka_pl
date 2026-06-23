@@ -6,9 +6,9 @@
     --pp-bg: #f3f6fa;
     --pp-surface: #ffffff;
     --pp-text: #0f172a;
-    --pp-text-muted: #64748b;
+    --pp-text-muted: #475569;
     --pp-accent: #f5b301;
-    --pp-accent-dark: #c98f00;
+    --pp-accent-dark: #92680a;
     --pp-accent-text: #1a1400;
     --pp-border: #e2e8f0;
     --pp-success: #15803d;
@@ -46,8 +46,8 @@ body {
 
 img, svg { display: block; max-width: 100%; height: auto; }
 
-a { color: #b45309; text-decoration-thickness: 1px; text-underline-offset: 2px; }
-a:hover { color: #92400e; }
+a { color: #92400e; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:hover { color: #78350f; }
 
 .container {
     width: min(100% - 2rem, var(--pp-max));
@@ -2297,7 +2297,7 @@ a.story-card__author:hover {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: #94a3b8;
+    color: #64748b;
 }
 
 .story-mod-bar__actions {
@@ -2537,7 +2537,7 @@ textarea.form-control {
 }
 
 .form-control::placeholder {
-    color: #94a3b8;
+    color: #64748b;
     opacity: 1;
 }
 

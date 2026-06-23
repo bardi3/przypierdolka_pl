@@ -185,6 +185,13 @@ server {
         try_files $uri $uri/ /index.php?$query_string;
     }
 
+    location ~* \.(css|js|woff2?|ttf|otf|eot|svg|png|jpe?g|gif|webp|ico)$ {
+        expires 1y;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        access_log off;
+        try_files $uri =404;
+    }
+
     location ~ \.php$ {
         include snippets/fastcgi-php.conf;
         fastcgi_pass unix:/run/php/php8.2-fpm.sock;  # dostosuj wersję PHP

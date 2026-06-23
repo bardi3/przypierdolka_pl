@@ -81,6 +81,61 @@ if (!function_exists('user_avatar_url')) {
     }
 }
 
+if (!function_exists('user_avatar_dimensions')) {
+    /**
+     * Rozmiar wyświetlania awatara (px) dla wariantu sm|md|lg|xl.
+     *
+     * @return array{width:int,height:int,sizes:string}
+     */
+    function user_avatar_dimensions(string $size = 'md'): array
+    {
+        $map = [
+            'sm' => 28,
+            'md' => 40,
+            'lg' => 48,
+            'xl' => 88,
+        ];
+        $px = $map[$size] ?? $map['md'];
+
+        return [
+            'width'  => $px,
+            'height' => $px,
+            'sizes'  => $px . 'px',
+        ];
+    }
+}
+
+if (!function_exists('user_avatar_srcset')) {
+    /**
+     * srcset awatara (1x + opcjonalny @2x) z cache bustingiem.
+     */
+    function user_avatar_srcset(?string $relativePath): ?string
+    {
+        $url1x = user_avatar_url($relativePath);
+        if ($url1x === null) {
+            return null;
+        }
+
+        $publicPath = (string)Config::get('app.paths.public');
+        $abs = $publicPath . '/' . ltrim((string)$relativePath, '/');
+        if (!is_file($abs)) {
+            return null;
+        }
+
+        $w1 = (int)(@getimagesize($abs)[0] ?? 80);
+        $parts = [e($url1x) . ' ' . $w1 . 'w'];
+
+        $path2x = preg_replace('/\.webp$/', '@2x.webp', (string)$relativePath);
+        $abs2x = $publicPath . '/' . ltrim($path2x, '/');
+        if ($path2x !== (string)$relativePath && is_file($abs2x)) {
+            $w2 = (int)(@getimagesize($abs2x)[0] ?? ($w1 * 2));
+            $parts[] = e(url($path2x . '?v=' . filemtime($abs2x))) . ' ' . $w2 . 'w';
+        }
+
+        return implode(', ', $parts);
+    }
+}
+
 if (!function_exists('iso8601')) {
     /**
      * Data w formacie ISO 8601 (atrybut datetime, schema.org).

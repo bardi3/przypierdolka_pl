@@ -295,8 +295,7 @@ final class HomeController extends Controller
             . "Disallow: /rejestracja\n"
             . "Disallow: /dodaj\n"
             . "Disallow: /konto\n\n"
-            . "Sitemap: {$base}/sitemap.xml\n"
-            . "LLMs-Txt: {$base}/llms.txt\n";
+            . "Sitemap: {$base}/sitemap.xml\n";
 
         return Response::text($body, 200, 'text/plain');
     }

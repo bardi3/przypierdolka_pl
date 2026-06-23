@@ -17,6 +17,7 @@ final class AvatarService
     private string $publicPath;
     private int $maxUpload;
     private int $outputSize;
+    private int $outputSize2x;
     private int $webpQuality;
     private int $maxDimension;
 
@@ -31,7 +32,8 @@ final class AvatarService
         $this->uploadDir = (string)Config::get('app.paths.uploads') . '/avatars';
         $this->publicPath = (string)Config::get('app.paths.public');
         $this->maxUpload = (int)($cfg['max_upload'] ?? 2 * 1024 * 1024);
-        $this->outputSize = (int)($cfg['output_size'] ?? 256);
+        $this->outputSize = (int)($cfg['output_size'] ?? 80);
+        $this->outputSize2x = (int)($cfg['output_size_2x'] ?? 160);
         $this->webpQuality = (int)($cfg['webp_quality'] ?? 82);
         $this->maxDimension = (int)($cfg['max_dimension'] ?? 2048);
         $this->allowedMime = $uploadCfg['allowed_mime'] ?? ['image/jpeg', 'image/png', 'image/webp'];
@@ -116,29 +118,26 @@ final class AvatarService
             return ['ok' => false, 'error' => 'Błąd kadrowania obrazu.'];
         }
 
-        $output = imagecreatetruecolor($this->outputSize, $this->outputSize);
-        if ($output === false) {
-            return ['ok' => false, 'error' => 'Błąd skalowania obrazu.'];
-        }
-
-        imagealphablending($output, true);
-        imagesavealpha($output, true);
-        if (!imagecopyresampled($output, $square, 0, 0, 0, 0, $this->outputSize, $this->outputSize, $size, $size)) {
-            return ['ok' => false, 'error' => 'Błąd skalowania obrazu.'];
-        }
-
         if (!is_dir($this->uploadDir)) {
             @mkdir($this->uploadDir, 0775, true);
         }
 
         $filename = 'u' . $userId . '_' . date('Ymd') . '_' . bin2hex(random_bytes(6)) . '.webp';
         $absolute = $this->uploadDir . '/' . $filename;
+        $absolute2x = $this->uploadDir . '/' . preg_replace('/\.webp$/', '@2x.webp', $filename);
 
-        if (!imagewebp($output, $absolute, $this->webpQuality)) {
+        if (!$this->saveSquareWebp($square, $size, $this->outputSize, $absolute)) {
             return ['ok' => false, 'error' => 'Nie udało się zapisać awatara.'];
         }
-
         @chmod($absolute, 0644);
+
+        if ($this->outputSize2x > $this->outputSize) {
+            if (!$this->saveSquareWebp($square, $size, $this->outputSize2x, $absolute2x)) {
+                @unlink($absolute);
+                return ['ok' => false, 'error' => 'Nie udało się zapisać awatara (2x).'];
+            }
+            @chmod($absolute2x, 0644);
+        }
 
         $relative = self::PUBLIC_PREFIX . $filename;
         $this->deleteFile($oldPath);
@@ -163,6 +162,31 @@ final class AvatarService
         if (is_file($absolute)) {
             @unlink($absolute);
         }
+
+        $absolute2x = preg_replace('/\.webp$/', '@2x.webp', $absolute);
+        if ($absolute2x !== $absolute && is_file($absolute2x)) {
+            @unlink($absolute2x);
+        }
+    }
+
+    private function saveSquareWebp(\GdImage $square, int $sourceSize, int $targetSize, string $absolute): bool
+    {
+        $output = imagecreatetruecolor($targetSize, $targetSize);
+        if ($output === false) {
+            return false;
+        }
+
+        imagealphablending($output, true);
+        imagesavealpha($output, true);
+        if (!imagecopyresampled($output, $square, 0, 0, 0, 0, $targetSize, $targetSize, $sourceSize, $sourceSize)) {
+            return false;
+        }
+
+        if (!imagewebp($output, $absolute, $this->webpQuality)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

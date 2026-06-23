@@ -22,7 +22,8 @@ $flashes = $flashes ?? [];
     <?php else: ?>
     <title><?= e($app_name) ?></title>
     <?php endif; ?>
-    <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
+    <link rel="preload" href="<?= e(asset('css/app.css')) ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>"></noscript>
 </head>
 <body data-ajax-rate-url="<?= e(url('/ajax/rate')) ?>"
       data-ajax-feed-url="<?= e(url('/ajax/feed')) ?>"

@@ -38,8 +38,10 @@ $currentUri = rtrim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '
     <?php endif; ?>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="<?= e(asset('css/app.css')) ?>" rel="stylesheet">
-    <link href="<?= e(asset('css/admin.css')) ?>" rel="stylesheet">
+    <link rel="preload" href="<?= e(asset('css/app.css')) ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>"></noscript>
+    <link rel="preload" href="<?= e(asset('css/admin.css')) ?>" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="<?= e(asset('css/admin.css')) ?>"></noscript>
 </head>
 <body class="admin-body">
     <header class="admin-topbar navbar navbar-dark bg-dark">

@@ -33,8 +33,9 @@ $err = static fn (string $f): string => isset($errors[$f]) ? 'is-invalid' : '';
         <form method="post" action="<?= e(url($formAction)) ?>" class="card">
             <div class="card-body">
                 <?= $csrf->field() ?>
-                <div style="position:absolute;left:-9999px" aria-hidden="true">
-                    <label>Nie wypełniaj <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+                <div class="visually-hidden">
+                    <label for="story-create-hp">Nie wypełniaj tego pola</label>
+                    <input type="text" id="story-create-hp" name="website" tabindex="-1" autocomplete="off">
                 </div>
 
                 <div class="mb-3">

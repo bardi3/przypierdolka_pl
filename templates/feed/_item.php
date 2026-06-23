@@ -17,28 +17,19 @@ $authorProfileUrl = ($authorUsername !== null && $authorUsername !== '')
     : null;
 $publishedAt = $story['published_at'] ?? $story['created_at'];
 ?>
-<article class="feed-post">
+<article class="feed-post" aria-labelledby="feed-post-<?= e($storyId) ?>-title">
     <header class="feed-post__head">
-        <?php if ($authorProfileUrl !== null): ?>
-            <a href="<?= e($authorProfileUrl) ?>" class="feed-post__avatar-link" aria-hidden="true">
-                <?= $view->renderPartial('layout/partials/user-avatar', [
-                    'path'  => $story['author_avatar_path'] ?? null,
-                    'size'  => 'md',
-                    'class' => 'feed-post__avatar',
-                    'alt'   => '',
-                ]) ?>
-            </a>
-        <?php else: ?>
-            <?= $view->renderPartial('layout/partials/user-avatar', [
-                'path'  => $story['author_avatar_path'] ?? null,
-                'size'  => 'md',
-                'class' => 'feed-post__avatar',
-                'alt'   => '',
-            ]) ?>
-        <?php endif; ?>
+        <?= $view->renderPartial('layout/partials/user-avatar', [
+            'path'  => $story['author_avatar_path'] ?? null,
+            'size'  => 'md',
+            'class' => 'feed-post__avatar',
+            'alt'   => '',
+        ]) ?>
         <div class="feed-post__meta">
             <?php if ($authorProfileUrl !== null): ?>
-                <a href="<?= e($authorProfileUrl) ?>" class="feed-post__author">@<?= e($authorName) ?></a>
+                <a href="<?= e($authorProfileUrl) ?>"
+                   class="feed-post__author"
+                   aria-label="Profil użytkownika @<?= e($authorName) ?>">@<?= e($authorName) ?></a>
             <?php else: ?>
                 <span class="feed-post__author">@<?= e($authorName) ?></span>
             <?php endif; ?>
@@ -52,7 +43,7 @@ $publishedAt = $story['published_at'] ?? $story['created_at'];
     </header>
 
     <div class="feed-post__body">
-        <h2 class="feed-post__title"><a href="<?= e($storyUrl) ?>"><?= e($story['title']) ?></a></h2>
+        <h2 id="feed-post-<?= e($storyId) ?>-title" class="feed-post__title"><a href="<?= e($storyUrl) ?>"><?= e($story['title']) ?></a></h2>
         <p class="feed-post__text"><?= e($story['excerpt']) ?></p>
     </div>
 
@@ -65,18 +56,18 @@ $publishedAt = $story['published_at'] ?? $story['created_at'];
                  data-csrf-name="<?= e($csrf->tokenName()) ?>"
                  data-user-rating="<?= e((string)($userRating ?? '')) ?>"
                  role="group"
-                 aria-label="Oceń historię">
+                 aria-label="Oceń historię «<?= e($story['title']) ?>» od 1 do 5 gwiazdek">
                 <?php for ($i = 5; $i >= 1; $i--): ?>
                     <button type="button"
                             class="rate-star<?= ($userRating !== null && $i <= $userRating) ? ' selected' : '' ?>"
                             data-value="<?= $i ?>"
                             title="<?= $i ?>/5"
-                            aria-label="<?= $i ?> na 5"
+                            aria-label="<?= $i ?> na 5 gwiazdek"
                             <?= $alreadyRated ? ' disabled' : '' ?>>&#9733;</button>
                 <?php endfor; ?>
             </div>
             <span class="feed-post__rating-count">(<span data-rating-count="<?= e($storyId) ?>"><?= e($story['ratings_count']) ?></span>)</span>
         </div>
-        <a href="<?= e($storyUrl) ?>" class="btn btn-accent btn-sm">Czytaj</a>
+        <a href="<?= e($storyUrl) ?>" class="btn btn-accent btn-sm">Czytaj historię</a>
     </footer>
 </article>
