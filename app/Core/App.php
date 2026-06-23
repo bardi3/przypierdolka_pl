@@ -36,6 +36,7 @@ final class App
         // Konfiguracja
         Config::load($basePath . '/config');
         Config::set('app.paths.base', $basePath);
+        self::syncAppUrlScheme();
 
         date_default_timezone_set((string)Config::get('app.timezone', 'Europe/Warsaw'));
         mb_internal_encoding((string)Config::get('app.charset', 'UTF-8'));
@@ -44,6 +45,23 @@ final class App
         $app->registerServices($basePath);
 
         return $app;
+    }
+
+    /** Gdy żądanie jest po HTTPS, a app.url ma http:// — naprawia mixed content (obrazki, OG). */
+    private static function syncAppUrlScheme(): void
+    {
+        $url = (string)Config::get('app.url', '');
+        if ($url === '' || !str_starts_with($url, 'http://')) {
+            return;
+        }
+
+        $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
+            || (($_SERVER['HTTP_X_FORWARDED_SSL'] ?? '') === 'on');
+
+        if ($isHttps) {
+            Config::set('app.url', 'https://' . substr($url, 7));
+        }
     }
 
     public static function instance(): self

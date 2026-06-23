@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 /**
- * Konfiguracja bezpieczeństwa.
- * UWAGA: zmień 'ip_salt' i 'app_key' na produkcji!
+ * Konfiguracja bezpieczeństwa (domyślna, dev).
+ * Na produkcji nadpisz ip_salt i app_key w config/local.php.
  */
 return [
     // Sól do hashowania IP (anonimizacja gości przy ocenach)

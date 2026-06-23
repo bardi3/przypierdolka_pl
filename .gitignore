@@ -1,7 +1,11 @@
 /vendor/
-/config/local.php
 .env
 *.log
+
+# Konfiguracja lokalna / VPS (sekrety — NIE commituj)
+/config/local.php
+/config/local.php.vps
+/config/*.local.php
 
 # Cache & runtime
 /storage/cache/*

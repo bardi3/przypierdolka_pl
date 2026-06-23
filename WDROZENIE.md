@@ -1,101 +1,139 @@
-# Wdrożenie przypierdolka.pl na serwer
+# Wdrożenie na VPS — przypierdolka.pl
 
-Krótka instrukcja: co wgrać, gdzie wpisać dane i jak sprawdzić, że serwis działa.
+Pliki projektu: **`/www/przypierdolka.pl`**  
+Document root (ruch HTTP): **`/www/przypierdolka.pl/public`**
 
 ---
 
-## 1. Wymagania serwera
+## Szybka checklista
 
-| Wymaganie | Wartość |
-|-----------|---------|
+1. Wgraj repozytorium do `/www/przypierdolka.pl`
+2. Ustaw document root na `.../public`
+3. Importuj **`database/install.sql`** (jedyny plik SQL)
+4. Utwórz **`config/local.php`** z danymi bazy i sekretami
+5. Uprawnienia na `storage/` i `public/assets/uploads/`
+6. Zaloguj się, zmień hasła admin/moderator
+
+---
+
+## 1. Struktura katalogów na VPS
+
+```
+/www/przypierdolka.pl/              ← korzeń repozytorium (NIE document root)
+/www/przypierdolka.pl/public/       ← tu wskazuje Nginx/Apache
+/www/przypierdolka.pl/config/
+/www/przypierdolka.pl/config/local.php   ← TWORZYSZ RĘCZNIE (nie ma w repo)
+/www/przypierdolka.pl/storage/      ← cache + logi (zapisywalny)
+/www/przypierdolka.pl/database/install.sql
+```
+
+---
+
+## 2. Wymagania PHP
+
+| Element | Wartość |
+|---------|---------|
 | PHP | **8.2+** |
-| Rozszerzenia | `pdo_mysql`, `json`, `mbstring`, **`gd`** (z obsługą **WebP**) |
+| Rozszerzenia | `pdo_mysql`, `json`, `mbstring`, **`gd`** z **WebP** |
 | Baza | MySQL 8 lub MariaDB 10.4+ |
-| Serwer WWW | Apache z `mod_rewrite` **lub** Nginx |
-| Composer | **Opcjonalny** — aplikacja działa bez `vendor/` |
+| Composer | **opcjonalny** — działa bez `vendor/` |
+
+Sprawdzenie:
+
+```bash
+php -v
+php -m | grep -E 'pdo_mysql|mbstring|gd|json'
+php -r "var_dump(function_exists('imagewebp'));"
+```
+
+Ostatnia linia musi zwrócić `bool(true)`.
 
 ---
 
-## 2. Wgranie plików
+## 3. Baza danych — jeden plik SQL
 
-Wgraj całe repozytorium na serwer (FTP, SFTP, git clone).
+**Plik:** `/www/przypierdolka.pl/database/install.sql`  
+Zawiera: schemat wszystkich tabel + kategorie + 3 historie + ustawienia + konta admin/moderator.
 
-**Document root musi wskazywać na katalog `public/`**, nie na korzeń projektu.
+### Krok A — utwórz bazę (SSH, jako root MySQL)
 
-```
-/home/user/przypierdolka/          ← korzeń repozytorium
-/home/user/przypierdolka/public/  ← document root (tu wchodzi ruch HTTP)
-```
-
-Przykład Apache (VirtualHost):
-
-```apache
-DocumentRoot /home/user/przypierdolka/public
-<Directory /home/user/przypierdolka/public>
-    AllowOverride All
-    Require all granted
-</Directory>
+```bash
+sudo mysql
 ```
 
-Plik `public/.htaccess` jest już w repozytorium — przepisuje żądania do `index.php`.
+```sql
+CREATE DATABASE `przypierdolka`
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
 
----
+CREATE USER 'przyp_user'@'localhost' IDENTIFIED BY 'TWOJE_SILNE_HASLO';
+GRANT ALL PRIVILEGES ON `przypierdolka`.* TO 'przyp_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
 
-## 3. Baza danych — import SQL
+Zmień `przyp_user` i hasło na swoje.
 
-### Krok A: utwórz bazę w panelu hostingu
+### Krok B — edytuj nazwę bazy (jeśli inna niż `przypierdolka`)
 
-W cPanel / DirectAdmin / phpMyAdmin utwórz:
-- bazę danych (np. `user_przypierdolka`)
-- użytkownika MySQL z pełnymi uprawnieniami do tej bazy
-- zapisz: **host**, **nazwa bazy**, **login**, **hasło**
-
-### Krok B: edytuj plik przed importem
-
-Otwórz `database/install.sql` i w linii:
+W pliku `install.sql` linia:
 
 ```sql
 USE `przypierdolka`;
 ```
 
-zmień `przypierdolka` na **rzeczywistą nazwę bazy** z panelu hostingu.
-
-Na VPS, jeśli baza nie istnieje, odkomentuj blok `CREATE DATABASE` na początku pliku.
-
-### Krok C: import
-
-**phpMyAdmin:** wybierz bazę → Import → wybierz `database/install.sql` → Wykonaj.
-
-**SSH:**
+### Krok C — import
 
 ```bash
-mysql -u TWOJ_LOGIN -p TWOJA_BAZA < database/install.sql
+mysql -u przyp_user -p przypierdolka < /www/przypierdolka.pl/database/install.sql
 ```
 
-> **Uwaga:** plik zawiera `DROP TABLE` — importuj tylko na **pustą** lub nową bazę.
+> Import zawiera `DROP TABLE` — używaj tylko na **pustej** bazie.
 
-### Dane startowe po imporcie
+### Konta po imporcie (zmień hasła!)
 
-| Login | Hasło (domyślne) | Rola |
-|-------|------------------|------|
-| `admin` | `admin1234` | administrator |
-| `moderator` | `moderator1234` | moderator |
-
-**Zmień hasła natychmiast** po pierwszym logowaniu (konto → ustawienia).
-
-Panel admina: `https://twoja-domena.pl/admineu`
+| Login | Hasło domyślne | Panel |
+|-------|----------------|-------|
+| `admin` | `admin1234` | `/admineu` |
+| `moderator` | `moderator1234` | `/admineu` |
 
 ---
 
-## 4. Konfiguracja aplikacji — `config/local.php`
+## 4. Konfiguracja — `config/local.php`
 
-To najważniejszy krok. Plik **nie jest w repozytorium** — musisz go utworzyć ręcznie.
+To **jedyny plik**, który musisz utworzyć i wypełnić na VPS.
 
 ```bash
-cp config/local.php.example config/local.php
+cp /www/przypierdolka.pl/web/config/local.php.example \
+   /www/przypierdolka.pl/web/config/local.php
+
+nano /www/przypierdolka.pl/config/local.php
 ```
 
-Edytuj `config/local.php` i uzupełnij:
+### Co wpisać gdzie
+
+| Pole w `local.php` | Co wpisać |
+|--------------------|-----------|
+| `database.host` | `127.0.0.1` (lub socket, jeśli inny) |
+| `database.database` | nazwa bazy, np. `przypierdolka` |
+| `database.username` | login MySQL, np. `przyp_user` |
+| `database.password` | hasło MySQL |
+| `app.url` | `https://przypierdolka.pl` (bez `/` na końcu) |
+| `app.env` | `production` |
+| `app.debug` | `false` |
+| `security.ip_salt` | losowy ciąg (patrz niżej) |
+| `security.app_key` | drugi losowy ciąg |
+
+### Generowanie sekretów
+
+```bash
+php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
+php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
+```
+
+Pierwszy wynik → `ip_salt`, drugi → `app_key`.
+
+### Przykład gotowego `config/local.php`
 
 ```php
 <?php
@@ -103,119 +141,53 @@ Edytuj `config/local.php` i uzupełnij:
 declare(strict_types=1);
 
 return [
-    // --- Baza danych (dane z panelu hostingu) ---
     'database' => [
-        'host'     => '127.0.0.1',        // często localhost lub adres z panelu
+        'host'     => '127.0.0.1',
         'port'     => 3306,
-        'database' => 'user_przypierdolka', // nazwa bazy
-        'username' => 'user_dblogin',       // login MySQL
-        'password' => 'TWOJE_HASLO_DB',     // hasło MySQL
+        'database' => 'przypierdolka',
+        'username' => 'przyp_user',
+        'password' => 'TWOJE_HASLO_MYSQL',
     ],
-
-    // --- Aplikacja ---
     'app' => [
         'env'   => 'production',
-        'url'   => 'https://przypierdolka.pl',  // pełny URL z https, bez końcowego /
+        'url'   => 'https://przypierdolka.pl',
         'debug' => false,
     ],
-
-    // --- Sekrety (OBOWIĄZKOWO wygeneruj nowe!) ---
     'security' => [
-        'ip_salt' => 'losowy-ciag-min-32-znaki',
-        'app_key' => 'inny-losowy-ciag-min-32-znaki',
+        'ip_salt' => 'a1b2c3...64_znaki_hex',
+        'app_key' => 'd4e5f6...inny_64_znaki_hex',
     ],
 ];
 ```
 
-### Generowanie sekretów (SSH lub lokalnie)
-
-```bash
-php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
-```
-
-Uruchom dwa razy — jeden wynik wklej jako `ip_salt`, drugi jako `app_key`.
-
-### Co gdzie wpisać — skrót
-
-| Co | Gdzie |
-|----|-------|
-| Host / login / hasło / nazwa bazy MySQL | `config/local.php` → `database` |
-| Adres strony (https://…) | `config/local.php` → `app.url` |
-| Wyłączenie trybu debug | `config/local.php` → `app.debug` = `false` |
-| Losowe sekrety | `config/local.php` → `security.ip_salt`, `security.app_key` |
-| Tytuł strony, opis SEO | panel admina → Ustawienia (lub tabela `settings` w bazie) |
-
-Domyślne dane w `config/database.php` (root / puste hasło) **nie zmieniaj** — nadpisuje je `local.php`.
+**Nie edytuj** `config/database.php` ani `config/app.php` — `local.php` je nadpisuje.
 
 ---
 
-## 5. Uprawnienia katalogów
+## 5. Serwer WWW
 
-Serwer WWW musi móc zapisywać cache, logi i uploady:
+### Nginx (zalecane na VPS)
 
-```bash
-chmod -R 775 storage/
-chmod -R 775 public/assets/uploads/
-```
-
-Na shared hostingu często wystarczy ustawić właściciela na użytkownika WWW (np. `www-data`).
-
-Wymagane katalogi (już w repo, muszą być zapisywalne):
-- `storage/cache/`
-- `storage/logs/`
-- `public/assets/uploads/stories/`
-- `public/assets/uploads/generated/`
-- `public/assets/uploads/avatars/`
-
----
-
-## 6. Composer (opcjonalnie)
-
-```bash
-composer install --no-dev --optimize-autoloader
-```
-
-Aplikacja działa też bez tego kroku — autoloader jest wbudowany w `bootstrap.php`.
-
----
-
-## 7. Sprawdzenie po wdrożeniu
-
-1. Otwórz `https://twoja-domena.pl` — strona główna z 3 przykładowymi historiami.
-2. Zaloguj się jako `admin` / `admin1234`.
-3. Wejdź na `https://twoja-domena.pl/admineu` — panel administracyjny.
-4. Sprawdź upload awatara na koncie użytkownika (wymaga GD + WebP).
-5. Sprawdź `https://twoja-domena.pl/llms.txt` — generuje się automatycznie przy pierwszym wejściu.
-
-### Typowe problemy
-
-| Objaw | Przyczyna | Rozwiązanie |
-|-------|-----------|-------------|
-| Błąd 500 „Błąd połączenia z bazą” | Złe dane w `local.php` | Sprawdź host, login, hasło, nazwę bazy |
-| 404 na wszystkich podstronach | Zły document root lub brak rewrite | Document root = `public/`, włącz `AllowOverride` |
-| Biała strona | `debug` wyłączony, błąd PHP | Tymczasowo `debug => true`, sprawdź `storage/logs/` |
-| Brak stylów / JS | Zły `app.url` | Ustaw pełny URL z https w `local.php` |
-| Awatar się nie zapisuje | Brak GD/WebP lub uprawnień | Zainstaluj `php-gd`, chmod na `uploads/avatars/` |
-
----
-
-## 8. Nginx (alternatywa dla Apache)
+Plik np. `/etc/nginx/sites-available/przypierdolka.pl`:
 
 ```nginx
 server {
     listen 80;
-    server_name przypierdolka.pl;
-    root /home/user/przypierdolka/public;
+    listen [::]:80;
+    server_name przypierdolka.pl www.przypierdolka.pl;
+
+    root /www/przypierdolka.pl/public;
     index index.php;
+
+    # Po certbot dodaj blok listen 443 ssl ...
 
     location / {
         try_files $uri $uri/ /index.php?$query_string;
     }
 
     location ~ \.php$ {
-        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.2-fpm.sock;  # dostosuj wersję PHP
     }
 
     location ~ /\. {
@@ -224,14 +196,112 @@ server {
 }
 ```
 
+```bash
+sudo ln -s /etc/nginx/sites-available/przypierdolka.pl /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+SSL (Let's Encrypt):
+
+```bash
+sudo certbot --nginx -d przypierdolka.pl -d www.przypierdolka.pl
+```
+
+### Apache
+
+```apache
+<VirtualHost *:80>
+    ServerName przypierdolka.pl
+    DocumentRoot /www/przypierdolka.pl/public
+
+    <Directory /www/przypierdolka.pl/public>
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/przypierdolka-error.log
+    CustomLog ${APACHE_LOG_DIR}/przypierdolka-access.log combined
+</VirtualHost>
+```
+
+`public/.htaccess` jest już w repozytorium.
+
+---
+
+## 6. Uprawnienia
+
+Serwer WWW (PHP-FPM / Apache) musi **zapisywać** cache, logi i uploady — w tym **`uploads/generated/`** (obrazki share WebP).
+
+```bash
+cd /www/przypierdolka.pl/web
+
+# utwórz katalogi, jeśli brakuje
+mkdir -p storage/cache storage/logs
+mkdir -p public/assets/uploads/{stories,generated,avatars}
+
+# Nginx/Apache zwykle jako www-data (dostosuj użytkownika, jeśli inny):
+sudo chown -R www-data:www-data storage/ public/assets/uploads/
+sudo chmod -R 775 storage/ public/assets/uploads/
+```
+
+Sprawdzenie (jako użytkownik www-data):
+
+```bash
+sudo -u www-data touch /www/przypierdolka.pl/web/public/assets/uploads/generated/.write-test \
+  && sudo -u www-data rm /www/przypierdolka.pl/web/public/assets/uploads/generated/.write-test \
+  && echo "OK — zapis działa"
+```
+
+Jeśli `Permission denied` przy `imagewebp` — to właśnie ten problem (właściciel katalogu to root zamiast www-data).
+
+---
+
+## 7. Composer (opcjonalnie)
+
+```bash
+cd /www/przypierdolka.pl
+composer install --no-dev --optimize-autoloader
+```
+
+Aplikacja działa też bez tego kroku.
+
+---
+
+## 8. Weryfikacja
+
+```bash
+curl -I https://przypierdolka.pl/
+curl -I https://przypierdolka.pl/admineu
+curl -I https://przypierdolka.pl/llms.txt
+```
+
+W przeglądarce:
+1. Strona główna ładuje historie
+2. Logowanie `admin` / `admin1234` → zmiana hasła
+3. Panel `/admineu` → Ustawienia
+4. Upload awatara na koncie (test GD/WebP)
+
+---
+
+## 9. Typowe problemy
+
+| Objaw | Rozwiązanie |
+|-------|-------------|
+| Błąd 500, „Błąd połączenia z bazą” | Sprawdź `config/local.php` → database |
+| 404 na podstronach | Document root = `public/`, nie korzeń |
+| Brak CSS/JS / **obrazki historii** | `app.url` musi być `https://…` (nie `http://`) — mixed content |
+| Awatar się nie zapisuje | `php-gd` + WebP, chmod na `uploads/avatars/` |
+| Biała strona | Tymczasowo `debug => true`, sprawdź `storage/logs/app-*.log` |
+
 ---
 
 ## Pliki kluczowe
 
 | Plik | Rola |
 |------|------|
-| `database/install.sql` | Jednorazowy import bazy (schemat + dane startowe) |
-| `config/local.php` | Twoja konfiguracja produkcyjna (nie commituj!) |
-| `config/local.php.example` | Szablon do skopiowania |
+| `database/install.sql` | **Jeden plik** — pełna baza |
+| `config/local.php` | Twoja konfiguracja produkcyjna |
+| `config/local.php.example` | Szablon do skopiowania na VPS |
+| `config/README.md` | Git vs serwer — co commitować |
 | `public/index.php` | Front controller |
-| `public/.htaccess` | Rewrite dla Apache |
+| `public/.htaccess` | Rewrite (Apache) |

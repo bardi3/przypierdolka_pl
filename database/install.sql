@@ -1,23 +1,26 @@
 -- =============================================================================
--- przypierdolka.pl — pełna instalacja bazy (schemat + dane startowe)
+-- przypierdolka.pl — JEDYNY PLIK SQL (schemat + dane startowe)
 -- MySQL 8 / MariaDB 10.4+ | utf8mb4
 -- =============================================================================
 --
--- PRZED IMPORTEM:
---   1. Utwórz bazę w panelu hostingu (np. cPanel → MySQL Databases).
---   2. Zmień nazwę bazy w linii USE poniżej (domyślnie: przypierdolka).
---   3. Na VPS z pełnymi uprawnieniami możesz odkomentować CREATE DATABASE.
+-- VPS (pliki w /www/przypierdolka.pl):
 --
--- IMPORT (SSH):
---   mysql -u TWOJ_USER -p TWOJA_BAZA < database/install.sql
+--   1. Utwórz bazę i użytkownika (mysql jako root):
+--        CREATE DATABASE `przypierdolka` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+--        CREATE USER 'przyp_user'@'localhost' IDENTIFIED BY 'TWOJE_HASLO';
+--        GRANT ALL ON `przypierdolka`.* TO 'przyp_user'@'localhost';
+--        FLUSH PRIVILEGES;
 --
--- IMPORT (phpMyAdmin):
---   Wybierz bazę → Import → wybierz ten plik → Wykonaj
+--   2. Import (zmień USE poniżej, jeśli inna nazwa bazy):
+--        mysql -u przyp_user -p przypierdolka < /www/przypierdolka.pl/database/install.sql
 --
--- UWAGA: Plik usuwa istniejące tabele (DROP TABLE) — nie importuj na bazę z danymi!
+--   3. Konfiguracja aplikacji: /www/przypierdolka.pl/config/local.php
+--      (szczegóły: WDROZENIE.md)
 --
--- Po imporcie ZMIEŃ hasła kont startowych:
---   admin     / admin1234
+-- UWAGA: DROP TABLE — importuj tylko na PUSTĄ bazę!
+--
+-- Konta startowe (ZMIEŃ HASŁA po logowaniu):
+--   admin / admin1234      → panel: https://przypierdolka.pl/admineu
 --   moderator / moderator1234
 -- =============================================================================
 

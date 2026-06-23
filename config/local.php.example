@@ -3,22 +3,22 @@
 declare(strict_types=1);
 
 /**
- * Lokalna konfiguracja — skopiuj jako config/local.php (nie commituj!).
+ * SZABLON PRODUKCJI — skopiuj na serwerze jako config/local.php
  *
- * Na produkcji OBOWIĄZKOWO nadpisz sekrety z config/security.php:
- * - security.ip_salt  — losowy ciąg min. 32 znaki
- * - security.app_key  — losowy ciąg min. 32 znaki
+ *   cp config/local.php.example config/local.php
+ *   nano config/local.php
  *
- * Przykład generowania: php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
+ * Ścieżka na VPS: /www/przypierdolka.pl/web/config/local.php
+ *
+ * Sekrety: php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
  */
 return [
-    // Dane z panelu hostingu (MySQL)
     'database' => [
-        'host'     => '127.0.0.1',
+        'host'     => 'localhost',
         'port'     => 3306,
         'database' => 'przypierdolka',
-        'username' => 'twoj_login_mysql',
-        'password' => 'twoje_haslo_mysql',
+        'username' => 'przypierdolka',
+        'password' => 'TWOJE_HASLO_MYSQL',
     ],
 
     'app' => [
@@ -28,14 +28,7 @@ return [
     ],
 
     'security' => [
-        'ip_salt' => 'PRODUKCJA_ZMIEN_LOSOWY_SALT',
-        'app_key' => 'PRODUKCJA_ZMIEN_LOSOWY_APP_KEY',
+        'ip_salt' => 'LOSOWY_CIAG_64_ZNAKI_HEX',
+        'app_key' => 'INNY_LOSOWY_CIAG_64_ZNAKI_HEX',
     ],
-    // Opcjonalnie: łagodniejsze limity na localu
-    // 'security' => [
-    //     'rate_limits' => [
-    //         'login'    => ['max' => 100, 'window' => 60],
-    //         'login_ip' => ['max' => 500, 'window' => 60],
-    //     ],
-    // ],
 ];
