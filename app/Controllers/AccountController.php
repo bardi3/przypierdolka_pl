@@ -72,6 +72,10 @@ final class AccountController extends Controller
 
     public function ajaxUploadAvatar(): Response
     {
+        if ($denied = $this->rejectUnlessAjax()) {
+            return $denied;
+        }
+
         try {
             $this->verifyCsrf();
         } catch (\Throwable) {
@@ -119,6 +123,10 @@ final class AccountController extends Controller
 
     public function ajaxRemoveAvatar(): Response
     {
+        if ($denied = $this->rejectUnlessAjax()) {
+            return $denied;
+        }
+
         try {
             $this->verifyCsrf();
         } catch (\Throwable) {

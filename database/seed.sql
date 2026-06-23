@@ -74,6 +74,7 @@ INSERT INTO `settings` (`key`, `value`) VALUES
 ('site_title',                 'przypierdolka.pl — krótkie historie, które przypierdalają'),
 ('site_description',           'Najlepsze humorystyczne historie z życia, pracy i szkoły. Dodawaj, oceniaj i udostępniaj!'),
 ('meta_keywords',              'historie, humor, śmieszne, memy, anegdoty'),
+('home_feed_per_page',         '5'),
 ('stories_require_moderation', '1'),
 ('social_facebook',            ''),
 ('social_instagram',           '');

@@ -50,7 +50,15 @@ final class SearchController extends Controller
     {
         $query = trim((string)$this->input('q', ''));
         $viewerId = $this->auth->id();
-        $results = $this->search->search($query, $viewerId);
+        $rateLimitError = null;
+        $results = $this->emptySearchResult($query);
+
+        if ($query !== '' && mb_strlen($query) >= $this->search->minLength()) {
+            $rateLimitError = $this->searchRateLimitMessage();
+            if ($rateLimitError === null) {
+                $results = $this->search->search($query, $viewerId, true);
+            }
+        }
 
         $title = $query !== '' ? 'Szukaj: ' . $query : 'Szukaj';
         $seo = (new Seo((string)Config::get('app.name'), (string)Config::get('app.url')))
@@ -59,40 +67,24 @@ final class SearchController extends Controller
             ->setCanonical($query !== '' ? '/szukaj?q=' . rawurlencode($query) : '/szukaj');
 
         return $this->view('search/index', array_merge([
-            'seo'     => $seo,
-            'query'   => $query,
-            'results' => $results,
+            'seo'            => $seo,
+            'query'          => $query,
+            'results'        => $results,
+            'rateLimitError' => $rateLimitError,
         ], $this->sidebarMeta()));
     }
 
     public function ajax(): Response
     {
+        if ($denied = $this->rejectUnlessAjax()) {
+            return $denied;
+        }
+
         if (trim((string)$this->input('website', '')) !== '') {
             return $this->json(['success' => false, 'error' => 'Odrzucono.'], 403);
         }
 
-        $ip = $this->clientIp();
-        if (!$this->rateLimiter->attempt('search_ip', $ip)) {
-            return $this->json([
-                'success' => false,
-                'error'   => 'Zbyt wiele zapytań. Spróbuj za chwilę.',
-            ], 429);
-        }
-
-        $identifier = $ip . '|' . session_id();
-        if (!$this->rateLimiter->attempt('search', $identifier)) {
-            $retry = $this->rateLimiter->retryAfter('search', $identifier);
-
-            return $this->json([
-                'success' => false,
-                'error'   => "Limit wyszukiwania. Spróbuj za {$retry} s.",
-            ], 429);
-        }
-
         $query = trim((string)$this->input('q', ''));
-        $viewerId = $this->auth->id();
-        $results = $this->search->search($query, $viewerId);
-
         if (mb_strlen($query) < $this->search->minLength()) {
             return $this->json([
                 'success' => true,
@@ -102,6 +94,14 @@ final class SearchController extends Controller
                 'hint'    => 'Wpisz co najmniej ' . $this->search->minLength() . ' znaki.',
             ]);
         }
+
+        $rateLimitError = $this->searchRateLimitMessage();
+        if ($rateLimitError !== null) {
+            return $this->json(['success' => false, 'error' => $rateLimitError], 429);
+        }
+
+        $viewerId = $this->auth->id();
+        $results = $this->search->search($query, $viewerId, false);
 
         $html = $this->view->renderPartial('search/_dropdown', [
             'results' => $results,
@@ -113,6 +113,20 @@ final class SearchController extends Controller
             'html'    => $html,
             'total'   => $results['total'],
         ]);
+    }
+
+    /**
+     * @return array{query:string, stories:array, users:array, friends:array, total:int}
+     */
+    private function emptySearchResult(string $query): array
+    {
+        return [
+            'query'   => $query,
+            'stories' => [],
+            'users'   => [],
+            'friends' => [],
+            'total'   => 0,
+        ];
     }
 
     /**

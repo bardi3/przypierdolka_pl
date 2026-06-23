@@ -37,10 +37,24 @@ final class FeedService
     /**
      * @return array{items:array, total:int, page:int, pages:int, min_ratings?:int}
      */
-    public function listing(string $feedType, int $page = 1, ?string $categorySlug = null, ?int $viewerId = null): array
-    {
+    public function listing(
+        string $feedType,
+        int $page = 1,
+        ?string $categorySlug = null,
+        ?int $viewerId = null,
+        ?int $perPage = null
+    ): array {
         $categoryId = $this->resolveCategoryId($categorySlug);
         $page = max(1, $page);
+
+        if (
+            in_array($feedType, [self::TYPE_CATEGORY, self::TYPE_CATEGORY_TOP], true)
+            && $categorySlug !== null
+            && $categorySlug !== ''
+            && $categoryId === null
+        ) {
+            return ['items' => [], 'total' => 0, 'page' => $page, 'pages' => 1];
+        }
 
         return match ($feedType) {
             self::TYPE_FRIENDS => $viewerId !== null
@@ -51,7 +65,7 @@ final class FeedService
             self::TYPE_TOP_ALL, self::TYPE_CATEGORY_TOP
                 => $this->rankingService->listing(Story::RANK_ALL, $page, $categoryId),
             self::TYPE_CATEGORY => $this->storyService->listing('newest', $page, $categoryId),
-            default => $this->storyService->listing('newest', $page, null),
+            default => $this->storyService->listing('newest', $page, null, $perPage),
         };
     }
 

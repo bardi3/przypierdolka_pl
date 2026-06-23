@@ -2,6 +2,7 @@
 /**
  * @var string $query
  * @var array{query:string, stories:array, users:array, friends:array, total:int} $results
+ * @var string|null $rateLimitError
  * @var \App\Core\Auth $auth
  */
 $stories = $results['stories'] ?? [];
@@ -25,7 +26,12 @@ $total = (int)($results['total'] ?? 0);
             </div>
         </form>
 
-        <?php if ($query === ''): ?>
+        <?php if (!empty($rateLimitError)): ?>
+            <?= $view->renderPartial('layout/partials/alert', [
+                'type' => 'warning',
+                'message' => $rateLimitError,
+            ]) ?>
+        <?php elseif ($query === ''): ?>
             <?= $view->renderPartial('layout/partials/alert', [
                 'type' => 'info',
                 'message' => 'Wpisz co najmniej 2 znaki, aby rozpocząć wyszukiwanie.',

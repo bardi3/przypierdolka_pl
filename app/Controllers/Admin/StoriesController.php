@@ -146,6 +146,10 @@ final class StoriesController extends AdminController
 
     public function refreshCache(string $id): Response
     {
+        if ($denied = $this->rejectUnlessAjax()) {
+            return $denied;
+        }
+
         if (!$this->csrf->verifyRequest()) {
             return $this->json(['success' => false, 'error' => 'Nieprawidłowy token CSRF.'], 403);
         }

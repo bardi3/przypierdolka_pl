@@ -131,6 +131,55 @@ abstract class Controller
         return (string)($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
     }
 
+    /** Odrzuca żądania bez nagłówka AJAX / Accept JSON (endpointy /ajax/*). */
+    protected function rejectUnlessAjax(): ?Response
+    {
+        if (!$this->wantsJson()) {
+            return $this->json(['success' => false, 'error' => 'Niedozwolone.'], 403);
+        }
+
+        return null;
+    }
+
+    protected function searchRateLimitMessage(): ?string
+    {
+        $ip = $this->clientIp();
+        if (!$this->rateLimiter->attempt('search_ip', $ip)) {
+            return 'Zbyt wiele zapytań. Spróbuj za chwilę.';
+        }
+
+        $identifier = $ip . '|' . session_id();
+        if (!$this->rateLimiter->attempt('search', $identifier)) {
+            $retry = $this->rateLimiter->retryAfter('search', $identifier);
+
+            return "Limit wyszukiwania. Spróbuj za {$retry} s.";
+        }
+
+        return null;
+    }
+
+    protected function feedRateLimitMessage(): ?string
+    {
+        $ip = $this->clientIp();
+        if (!$this->rateLimiter->attempt('feed_ip', $ip)) {
+            return 'Zbyt wiele żądań. Spróbuj za chwilę.';
+        }
+
+        $identifier = $ip . '|' . session_id();
+        if (!$this->rateLimiter->attempt('feed', $identifier)) {
+            $retry = $this->rateLimiter->retryAfter('feed', $identifier);
+
+            return "Limit ładowania tablicy. Spróbuj za {$retry} s.";
+        }
+
+        return null;
+    }
+
+    protected function isValidSlug(string $slug): bool
+    {
+        return $slug !== '' && preg_match('/^[a-z0-9-]{1,80}$/', $slug) === 1;
+    }
+
     /**
      * @param array<int, array<string, mixed>> $stories
      * @return array<int, int> story_id => ocena użytkownika

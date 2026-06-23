@@ -49,7 +49,7 @@ final class SearchService
      *   total:int
      * }
      */
-    public function search(string $query, ?int $viewerId = null): array
+    public function search(string $query, ?int $viewerId = null, bool $searchContent = false): array
     {
         $query = $this->normalize($query);
         if (mb_strlen($query) < $this->minLength) {
@@ -57,13 +57,14 @@ final class SearchService
         }
 
         $cacheKey = sprintf(
-            'search:%s:%s',
+            'search:%s:%s:%d',
             $viewerId ?? 'guest',
-            sha1(mb_strtolower($query))
+            sha1(mb_strtolower($query)),
+            $searchContent ? 1 : 0
         );
 
-        return $this->cache->remember($cacheKey, function () use ($query, $viewerId): array {
-            $stories = $this->stories->searchPublished($query, $this->maxResults);
+        return $this->cache->remember($cacheKey, function () use ($query, $viewerId, $searchContent): array {
+            $stories = $this->stories->searchPublished($query, $this->maxResults, $searchContent);
             $users = $this->users->searchPublic($query, $this->maxResults);
             $friends = $viewerId !== null
                 ? $this->friendships->searchFriends($viewerId, $query, $this->maxResults)

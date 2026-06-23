@@ -215,11 +215,19 @@ final class StoryController extends Controller
 
     public function ajaxStore(): Response
     {
+        if ($denied = $this->rejectUnlessAjax()) {
+            return $denied;
+        }
+
         return $this->handleStore(true);
     }
 
     public function ajaxUpdate(string $id): Response
     {
+        if ($denied = $this->rejectUnlessAjax()) {
+            return $denied;
+        }
+
         try {
             $this->verifyCsrf();
         } catch (HttpException $e) {

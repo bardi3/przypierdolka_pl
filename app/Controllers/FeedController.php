@@ -9,6 +9,7 @@ use App\Core\Config;
 use App\Core\Controller;
 use App\Core\Response;
 use App\Models\Category;
+use App\Models\Setting;
 use App\Models\Story;
 use App\Services\FeedService;
 use App\Services\RankingService;
@@ -35,7 +36,16 @@ final class FeedController extends Controller
 
     public function load(): Response
     {
-        $page = max(1, (int)$this->input('page', 1));
+        if ($denied = $this->rejectUnlessAjax()) {
+            return $denied;
+        }
+
+        $rateMsg = $this->feedRateLimitMessage();
+        if ($rateMsg !== null) {
+            return $this->json(['success' => false, 'error' => $rateMsg], 429);
+        }
+
+        $page = max(1, min(500, (int)$this->input('page', 1)));
         $feedType = (string)$this->input('feed', FeedService::TYPE_NEWEST);
         $slug = trim((string)$this->input('slug', ''));
 
@@ -52,12 +62,23 @@ final class FeedController extends Controller
             $feedType = FeedService::TYPE_NEWEST;
         }
 
+        if ($slug !== '' && !$this->isValidSlug($slug)) {
+            return $this->json(['success' => false, 'error' => 'Nieprawidłowy parametr.'], 400);
+        }
+
         if ($feedType === FeedService::TYPE_FRIENDS && !$this->auth->check()) {
             return $this->json(['success' => false, 'error' => 'Wymagane logowanie.'], 401);
         }
 
         $viewerId = $feedType === FeedService::TYPE_FRIENDS ? $this->auth->id() : null;
-        $listing = $this->feed->listing($feedType, $page, $slug !== '' ? $slug : null, $viewerId);
+        $perPage = $this->resolveFeedPerPage($feedType, $slug);
+        $listing = $this->feed->listing(
+            $feedType,
+            $page,
+            $slug !== '' ? $slug : null,
+            $viewerId,
+            $perPage
+        );
 
         if ($page > $listing['pages']) {
             return $this->json(['success' => false, 'error' => 'Koniec tablicy.'], 404);
@@ -76,5 +97,14 @@ final class FeedController extends Controller
             'pages'    => $listing['pages'],
             'has_more' => $page < $listing['pages'],
         ]);
+    }
+
+    private function resolveFeedPerPage(string $feedType, string $slug): ?int
+    {
+        if ($feedType === FeedService::TYPE_NEWEST && $slug === '') {
+            return (new Setting($this->db))->homeFeedPerPage();
+        }
+
+        return null;
     }
 }

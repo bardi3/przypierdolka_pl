@@ -10,9 +10,13 @@ $labels = [
     'site_title'                 => 'Tytuł serwisu (SEO)',
     'site_description'           => 'Opis serwisu (meta description)',
     'meta_keywords'              => 'Słowa kluczowe',
+    'home_feed_per_page'         => 'Historie na stronie głównej (start + scroll)',
     'stories_require_moderation' => 'Wymagaj moderacji (1/0)',
     'social_facebook'            => 'Facebook URL',
     'social_instagram'           => 'Instagram URL',
+];
+$hints = [
+    'home_feed_per_page' => 'Ile historii wczytać od razu i w każdej kolejnej partii AJAX (3–30). Domyślnie: 5.',
 ];
 ?>
 <h1 class="h3 mb-4">Ustawienia</h1>
@@ -25,8 +29,14 @@ $labels = [
                 <label class="form-label" for="<?= e($key) ?>"><?= e($labels[$key] ?? $key) ?></label>
                 <?php if ($key === 'site_description'): ?>
                     <textarea id="<?= e($key) ?>" name="<?= e($key) ?>" rows="2" class="form-control"><?= e($settings[$key] ?? '') ?></textarea>
+                <?php elseif ($key === 'home_feed_per_page'): ?>
+                    <input type="number" id="<?= e($key) ?>" name="<?= e($key) ?>" class="form-control"
+                           min="3" max="30" step="1" value="<?= e($settings[$key] ?? '5') ?>">
                 <?php else: ?>
                     <input type="text" id="<?= e($key) ?>" name="<?= e($key) ?>" class="form-control" value="<?= e($settings[$key] ?? '') ?>">
+                <?php endif; ?>
+                <?php if (!empty($hints[$key])): ?>
+                    <div class="form-text text-muted"><?= e($hints[$key]) ?></div>
                 <?php endif; ?>
                 <?php if (!empty($errors[$key][0])): ?>
                     <div class="form-text text-danger"><?= e($errors[$key][0]) ?></div>

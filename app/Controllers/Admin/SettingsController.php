@@ -20,6 +20,7 @@ final class SettingsController extends AdminController
         'site_title',
         'site_description',
         'meta_keywords',
+        'home_feed_per_page',
         'stories_require_moderation',
         'social_facebook',
         'social_instagram',
@@ -53,6 +54,7 @@ final class SettingsController extends AdminController
             'site_title'               => 'tytuł strony',
             'site_description'         => 'opis strony',
             'meta_keywords'            => 'słowa kluczowe',
+            'home_feed_per_page'       => 'historie na stronie głównej',
             'stories_require_moderation' => 'moderacja historii',
             'social_facebook'          => 'Facebook',
             'social_instagram'         => 'Instagram',
@@ -61,6 +63,7 @@ final class SettingsController extends AdminController
             'site_title'               => 'required|max:100',
             'site_description'         => 'max:300',
             'meta_keywords'            => 'max:255',
+            'home_feed_per_page'       => 'required|int',
             'stories_require_moderation' => 'required|in:0,1',
             'social_facebook'          => 'max:255',
             'social_instagram'         => 'max:255',
@@ -71,6 +74,11 @@ final class SettingsController extends AdminController
         }
         if ($pairs['social_instagram'] !== '' && !filter_var($pairs['social_instagram'], FILTER_VALIDATE_URL)) {
             $validator->addError('social_instagram', 'Podaj prawidłowy URL (https://…).');
+        }
+
+        $feedPerPage = (int)$pairs['home_feed_per_page'];
+        if ($feedPerPage < 3 || $feedPerPage > 30) {
+            $validator->addError('home_feed_per_page', 'Liczba historii musi być od 3 do 30.');
         }
 
         if ($validator->fails()) {

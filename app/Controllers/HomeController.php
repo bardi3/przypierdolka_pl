@@ -62,8 +62,9 @@ final class HomeController extends Controller
 
         $pageNum = max(1, (int)($page ?? 1));
         $sort = 'newest';
+        $homePerPage = $this->settings->homeFeedPerPage();
 
-        $listing = $this->storyService->listing($sort, $pageNum);
+        $listing = $this->storyService->listing($sort, $pageNum, null, $homePerPage);
         if ($pageNum > $listing['pages']) {
             throw HttpException::notFound('Strona nie istnieje.');
         }
@@ -112,7 +113,7 @@ final class HomeController extends Controller
                 $siteDesc ?: null,
                 $listing['items'],
                 $pageNum,
-                (int)Config::get('app.per_page', 12),
+                $homePerPage,
                 $breadcrumbItems
             ));
 

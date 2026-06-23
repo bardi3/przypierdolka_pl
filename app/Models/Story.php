@@ -452,9 +452,23 @@ final class Story extends Model
     /**
      * @return array<int, array<string, mixed>>
      */
-    public function searchPublished(string $query, int $limit = 8): array
+    public function searchPublished(string $query, int $limit = 8, bool $searchContent = true): array
     {
         $like = '%' . $this->escapeLike($query) . '%';
+
+        if ($searchContent) {
+            return $this->db->fetchAll(
+                "SELECT s.id, s.title, s.slug, s.excerpt,
+                        c.name AS category_name, c.slug AS category_slug
+                 FROM `stories` s
+                 LEFT JOIN `categories` c ON c.id = s.category_id
+                 WHERE s.status = 'published'
+                   AND (s.title LIKE ? OR s.excerpt LIKE ? OR s.content LIKE ?)
+                 ORDER BY s.published_at DESC
+                 LIMIT ?",
+                [$like, $like, $like, $limit]
+            );
+        }
 
         return $this->db->fetchAll(
             "SELECT s.id, s.title, s.slug, s.excerpt,
@@ -462,10 +476,10 @@ final class Story extends Model
              FROM `stories` s
              LEFT JOIN `categories` c ON c.id = s.category_id
              WHERE s.status = 'published'
-               AND (s.title LIKE ? OR s.excerpt LIKE ? OR s.content LIKE ?)
+               AND (s.title LIKE ? OR s.excerpt LIKE ?)
              ORDER BY s.published_at DESC
              LIMIT ?",
-            [$like, $like, $like, $limit]
+            [$like, $like, $limit]
         );
     }
 

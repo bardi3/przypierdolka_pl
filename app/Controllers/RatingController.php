@@ -32,6 +32,10 @@ final class RatingController extends Controller
      */
     public function ajaxRate(): Response
     {
+        if ($denied = $this->rejectUnlessAjax()) {
+            return $denied;
+        }
+
         return $this->processRate(
             (int)$this->input('story_id', 0),
             (int)$this->input('rating', 0)

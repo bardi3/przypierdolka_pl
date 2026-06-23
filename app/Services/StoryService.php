@@ -42,22 +42,23 @@ final class StoryService
     /**
      * @return array{items:array<int,array<string,mixed>>, total:int, page:int, pages:int, sort:string}
      */
-    public function listing(string $sort = 'newest', int $page = 1, ?int $categoryId = null): array
+    public function listing(string $sort = 'newest', int $page = 1, ?int $categoryId = null, ?int $perPage = null): array
     {
         $page = max(1, $page);
-        $offset = ($page - 1) * $this->perPage;
+        $limit = max(1, min(50, $perPage ?? $this->perPage));
+        $offset = ($page - 1) * $limit;
         $sort = $this->normalizeSort($sort);
 
-        $cacheKey = sprintf('stories:list:%s:%s:%d', $sort, $categoryId ?? 'all', $page);
+        $cacheKey = sprintf('stories:list:%s:%s:%d:%d', $sort, $categoryId ?? 'all', $page, $limit);
 
-        return $this->cache->remember($cacheKey, function () use ($sort, $offset, $categoryId, $page): array {
-            $items = $this->stories->published($sort, $this->perPage, $offset, $categoryId);
+        return $this->cache->remember($cacheKey, function () use ($sort, $offset, $categoryId, $page, $limit): array {
+            $items = $this->stories->published($sort, $limit, $offset, $categoryId);
             $total = $this->stories->countPublished($categoryId);
             return [
                 'items' => $items,
                 'total' => $total,
                 'page'  => $page,
-                'pages' => (int)max(1, ceil($total / $this->perPage)),
+                'pages' => (int)max(1, ceil($total / $limit)),
                 'sort'  => $sort,
             ];
         }, $this->listTtl);

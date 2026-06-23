@@ -57,4 +57,12 @@ final class Setting extends Model
             $this->set($key, $value);
         }
     }
+
+    /** Liczba historii na stronie głównej (pierwsze wczytanie + kolejne partie AJAX). */
+    public function homeFeedPerPage(): int
+    {
+        $value = (int)$this->get('home_feed_per_page', '5');
+
+        return max(3, min(30, $value > 0 ? $value : 5));
+    }
 }
