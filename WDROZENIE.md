@@ -160,7 +160,45 @@ return [
 ];
 ```
 
-**Nie edytuj** `config/database.php` ani `config/app.php` — `local.php` je nadpisuje.
+**Nie edytuj** `config/app.php` na serwerze — produkcję ustaw w `config/local.php` (URL, debug, baza).  
+`config/database.php` jest w `.gitignore` — trzymaj lokalnie, nie commituj.
+
+---
+
+## 4b. Aktualizacja kodu (`git pull`)
+
+Na VPS **nie zmieniaj ręcznie** plików z repozytorium (`config/app.php`, `.htaccess`). Dane serwera trzymaj w `config/local.php`.
+
+### Błąd: „Your local changes would be overwritten by merge”
+
+Jednorazowo (np. katalog `/www/przypierdolka.pl/web`):
+
+```bash
+cd /www/przypierdolka.pl/web
+
+mkdir -p storage/backups
+cp config/local.php storage/backups/local.php.bak
+cp config/database.php storage/backups/database.php.bak
+
+git restore config/app.php public/assets/uploads/.htaccess
+git restore config/database.php
+
+git pull origin main
+
+cp storage/backups/database.php.bak config/database.php
+# local.php jest w .gitignore — pull go nie rusza; na wszelki wypadek:
+test -f config/local.php || cp storage/backups/local.php.bak config/local.php
+```
+
+### Kolejne aktualizacje
+
+```bash
+cd /www/przypierdolka.pl/web
+chmod +x bin/vps-pull.sh   # raz, po pierwszym pull ze skryptem
+./bin/vps-pull.sh
+```
+
+Skrypt robi kopię `local.php` / `database.php`, cofa lokalne diffy w plikach z gita, robi `pull` i przywraca `database.php` jeśli zniknął.
 
 ---
 
