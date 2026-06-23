@@ -6,6 +6,7 @@
 /config/local.php
 /config/local.php.vps
 /config/*.local.php
+/config/database.php
 
 # Cache & runtime
 /storage/cache/*

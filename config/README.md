@@ -5,7 +5,7 @@
 | Plik | Zawartość |
 |------|-----------|
 | `app.php` | Domyślne dev (`localhost:8000`, debug on) |
-| `database.php` | Dev: `root` bez hasła — **bez sekretów produkcyjnych** |
+| `database.php.example` | Szablon połączenia DB — skopiuj jako `database.php` |
 | `security.php` | Domyślne limity; placeholdery soli (nadpisz na prod w `local.php`) |
 | `routes.php` | Trasy aplikacji |
 | `local.php.example` | Szablon produkcji — **tylko wzór, bez prawdziwych haseł** |
@@ -15,6 +15,7 @@
 | Plik | Gdzie |
 |------|-------|
 | `local.php` | VPS: `/www/przypierdolka.pl/web/config/local.php` |
+| `database.php` | Lokalnie: `cp config/database.php.example config/database.php` |
 
 Plik jest w `.gitignore`. Nadpisuje `database.php` — zawiera hasło MySQL, URL `https://` i sekrety.
 
@@ -37,6 +38,7 @@ mysql -u przypierdolka -p przypierdolka -e "SELECT 1;"
 
 ```bash
 cp config/local.php.example config/local.php
+cp config/database.php.example config/database.php
 # dostosuj database do swojego MySQL (np. root / puste hasło)
 # ustaw app.url na http://localhost:8000 i debug => true
 ```
